@@ -36,25 +36,39 @@ struct Fly {
     genotype: Genotype
 }
 
+#[derive(Debug)]
+#[derive(Copy,Clone)]
+struct ProportionSexe {
+    sex: Sex,
+    proportion: f64
+}
+
+#[derive(Debug)]
+#[derive(Copy,Clone)]
+struct ProportionGenotype {
+    genotype: Genotype,
+    proportion: f64
+}
+
 // Functions
-fn create_first_generation(n: &u32, paa: &f64, pab: &f64, pbb: &f64,
-                           pfemale: &f64, pmale: &f64) -> Vec<Fly> {
+fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
+                           pgenotypes: &Vec<ProportionGenotype>) -> Vec<Fly> {
 
     // Create adults with random sex and genotype using proportions
     let mut rng = rand::thread_rng();
     let mut v = Vec::new();
 
-    let possible_sexes = [(Sex::female, pfemale),
-                          (Sex::male , pmale)];
+    //let possible_sexes = [(Sex::female, pfemale),
+    //                      (Sex::male , pmale)];
 
-    let possible_genotypes = [(Genotype::AA, paa),
-                              (Genotype::AB , pab),
-                              (Genotype::BB , pbb)];
+    //let possible_genotypes = [(Genotype::AA, paa),
+    //                          (Genotype::AB , pab),
+    //                          (Genotype::BB , pbb)];
 
     for _ in 0..*n {
         // Pick random sex and genotype
-        let sex = possible_sexes.choose_weighted(&mut rng, |item| item.1).unwrap().0;
-        let genotype = possible_genotypes.choose_weighted(&mut rng, |item| item.1).unwrap().0;
+        let sex = psexes.choose_weighted(&mut rng, |item| item.proportion).unwrap().sex;
+        let genotype = pgenotypes.choose_weighted(&mut rng, |item| item.proportion).unwrap().genotype;
 
         v.push(Fly{ sex: sex, genotype: genotype });
     }
@@ -101,6 +115,18 @@ fn main() {
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
     let proportion_males = 1.0 - proportion_females;
 
+    // Create global variables
+    let proportion_sexes = vec![
+        ProportionSexe{ sex: Sex::female, proportion: proportion_females },
+        ProportionSexe{ sex: Sex::male, proportion: proportion_males },
+    ];
+
+    let proportion_genotypes = vec![
+        ProportionGenotype{ genotype: Genotype::AA, proportion: proportion_aa },
+        ProportionGenotype{ genotype: Genotype::AB, proportion: proportion_ab },
+        ProportionGenotype{ genotype: Genotype::BB, proportion: proportion_bb },
+    ];
+
     // Create initial fly and eggs vectors
     let mut individual_adults: Vec<Fly> = Vec::new();
     let mut individual_eggs: Vec<Fly> = Vec::new();
@@ -111,11 +137,11 @@ fn main() {
 
     let individual_eggs_bogus = create_first_generation(
         &number_adults,
-        &proportion_aa, &proportion_ab, &proportion_bb,
-        &proportion_females, &proportion_males
+        &proportion_sexes,
+        &proportion_genotypes
         );
 
-    println!("First gen:\n{:#?}", individual_eggs_bogus);
+    println!("First gen:\n{:?}", individual_eggs_bogus);
 
     for gen in 1..=number_generations {
 
