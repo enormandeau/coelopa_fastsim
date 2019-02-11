@@ -1,7 +1,9 @@
 [package]
-name = "coelopa_temp"
+name = "coelopa_fastsim"
 version = "0.1.0"
 authors = ["Eric Normandeau <eric.normandeau.qc@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+rand = "0.6.5"
+clap = "2.32.0"
