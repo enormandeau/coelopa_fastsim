@@ -91,6 +91,7 @@ fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
 // Main
 fn main() {
     // Parameters
+    // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
     let number_generations = 5;
     let number_eggs_per_generation = 1000;
@@ -127,7 +128,15 @@ fn main() {
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
     let proportion_males = 1.0 - proportion_females;
 
-    // Create global variables
+    // TODO Create global HashMap variables
+    let female_survival = 2;
+    let male_survival = 2;
+    let female_eggs = 2;
+    let male_success = 2;
+    let female_maturation = 2;
+    let male_maturation = 2;
+
+    // Proportions for weighted sampling with `choose_weighted`
     let proportion_sexes = vec![
         ProportionSexe{ sex: Sex::female, proportion: proportion_females },
         ProportionSexe{ sex: Sex::male, proportion: proportion_males },
@@ -153,17 +162,29 @@ fn main() {
         &proportion_genotypes
         );
 
-//    for i in individual_eggs_bogus {
-//        println!("{}", i);
-//    }
-
     for gen in 1..=number_generations {
 
-        // Skip egg part of the cycle for generation 0
+        println!("\nGeneration: {:5}", gen);
+
+        // Egg survival to adulthood (except generation 1)
         if gen != 1 {
-            let a = 0;
+            println!("--Eggs");
+
+            // TODO egg survival by sex and genotype
         }
 
-        println!("Generation: {:5}", gen);
+        println!("--Adults");
+
+        // TODO Survival to reproduction
+        // 1) environment duration
+        // 2) frequency dependence
+
+        // TODO Reproduction
+        // for each female, pick a male randomly (weighted)
+        // for each egg, pick sex (weighted) and genotype (from available males) randomly
+
+        // TODO end simulation
+        // if either AA or BB alleles get fixated, end simulation
+        // report results
     }
 }
