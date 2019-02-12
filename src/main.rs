@@ -15,17 +15,31 @@ use std::env;
 // Enums
 #[derive(Debug)]
 #[derive(Copy,Clone)]
-enum Sex {
-    female,
-    male
+enum Sex { female, male }
+
+impl std::fmt::Display for Sex {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let printable = match *self {
+            Sex::female => "female",
+            Sex::male => "male",
+        };
+        write!(f, "{}", printable)
+    }
 }
 
 #[derive(Debug)]
 #[derive(Copy,Clone)]
-enum Genotype {
-    AA,
-    AB,
-    BB
+enum Genotype { AA, AB, BB }
+
+impl std::fmt::Display for Genotype {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let printable = match *self {
+            Genotype::AA => "AA",
+            Genotype::AB => "AB",
+            Genotype::BB => "BB",
+        };
+        write!(f, "{}", printable)
+    }
 }
 
 // Structs
@@ -34,6 +48,12 @@ enum Genotype {
 struct Fly {
     sex: Sex,
     genotype: Genotype
+}
+
+impl std::fmt::Display for Fly {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}_{}", self.sex, self.genotype)
+    }
 }
 
 #[derive(Debug)]
@@ -54,19 +74,11 @@ struct ProportionGenotype {
 fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
                            pgenotypes: &Vec<ProportionGenotype>) -> Vec<Fly> {
 
-    // Create adults with random sex and genotype using proportions
     let mut rng = rand::thread_rng();
     let mut v = Vec::new();
 
-    //let possible_sexes = [(Sex::female, pfemale),
-    //                      (Sex::male , pmale)];
-
-    //let possible_genotypes = [(Genotype::AA, paa),
-    //                          (Genotype::AB , pab),
-    //                          (Genotype::BB , pbb)];
-
+    // Create adults with random sex and genotype using proportions
     for _ in 0..*n {
-        // Pick random sex and genotype
         let sex = psexes.choose_weighted(&mut rng, |item| item.proportion).unwrap().sex;
         let genotype = pgenotypes.choose_weighted(&mut rng, |item| item.proportion).unwrap().genotype;
 
@@ -141,7 +153,9 @@ fn main() {
         &proportion_genotypes
         );
 
-    println!("First gen:\n{:?}", individual_eggs_bogus);
+//    for i in individual_eggs_bogus {
+//        println!("{}", i);
+//    }
 
     for gen in 1..=number_generations {
 
