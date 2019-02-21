@@ -1,20 +1,23 @@
 #![allow(warnings)]
-// Modules
+/// Modules
 extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 extern crate rand;
 use rand::prelude::*;
 use rand::Rng;
+use rand::distributions::Uniform;
 
+use std::collections::HashMap;
+use counter::Counter;
 use std::vec::Vec;
 use std::io::prelude::*;
 use std::io;
 use std::env;
 
-// Enums
-#[derive(Debug)]
+/// Enums
 #[derive(Copy,Clone)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 enum Sex { female, male }
 
 impl std::fmt::Display for Sex {
@@ -27,8 +30,8 @@ impl std::fmt::Display for Sex {
     }
 }
 
-#[derive(Debug)]
 #[derive(Copy,Clone)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 enum Genotype { AA, AB, BB }
 
 impl std::fmt::Display for Genotype {
@@ -42,9 +45,9 @@ impl std::fmt::Display for Genotype {
     }
 }
 
-// Structs
-#[derive(Debug)]
+/// Structs
 #[derive(Copy,Clone)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 struct Fly {
     sex: Sex,
     genotype: Genotype
@@ -70,7 +73,7 @@ struct ProportionGenotype {
     proportion: f64
 }
 
-// Functions
+/// Functions
 fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
                            pgenotypes: &Vec<ProportionGenotype>) -> Vec<Fly> {
 
@@ -88,14 +91,14 @@ fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
     v
 }
 
-// Main
+/// Main
 fn main() {
-    // Parameters
+    /// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
     let number_generations = 5;
-    let number_eggs_per_generation = 1000;
-    let number_eggs_per_female = 50;
+    let number_eggs_per_generation = 10000;
+    let number_eggs_per_female = 50 as f64;
     let proportion_females = 0.5;
     let proportion_aa = 0.07;
     let proportion_bb = 0.44;
@@ -128,13 +131,36 @@ fn main() {
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
     let proportion_males = 1.0 - proportion_females;
 
-    // TODO Create global HashMap variables
-    let female_survival = 2;
-    let male_survival = 2;
-    let female_eggs = 2;
-    let male_success = 2;
-    let female_maturation = 2;
-    let male_maturation = 2;
+    /// Survival and reproduction parameters
+    // Survival from egg to adult
+    let mut egg_survival: HashMap<&Fly, f64> = HashMap::new();
+    egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, survival_females_aa);
+    egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::AB }, survival_females_ab);
+    egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::BB }, survival_females_bb);
+    egg_survival.insert(&Fly { sex: Sex::male, genotype: Genotype::AA }, survival_males_aa);
+    egg_survival.insert(&Fly { sex: Sex::male, genotype: Genotype::AB }, survival_males_ab);
+    egg_survival.insert(&Fly { sex: Sex::male, genotype: Genotype::BB }, survival_males_bb);
+
+    // Number of eggs per female genotype
+    let mut female_eggs: HashMap<&Fly, f64> = HashMap::new();
+    female_eggs.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, number_eggs_per_female * female_eggs_aa);
+    female_eggs.insert(&Fly { sex: Sex::female, genotype: Genotype::AB }, number_eggs_per_female * female_eggs_ab);
+    female_eggs.insert(&Fly { sex: Sex::female, genotype: Genotype::BB }, number_eggs_per_female * female_eggs_bb);
+
+    // Male reproductive sucess per genotype
+    let mut male_success: HashMap<&Fly, f64> = HashMap::new();
+    male_success.insert(&Fly { sex: Sex::male, genotype: Genotype::AA }, male_success_aa);
+    male_success.insert(&Fly { sex: Sex::male, genotype: Genotype::AB }, male_success_ab);
+    male_success.insert(&Fly { sex: Sex::male, genotype: Genotype::BB }, male_success_bb);
+
+    // Maturation time
+    let mut maturation_time: HashMap<&Fly, f64> = HashMap::new();
+    maturation_time.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, female_maturation_days);
+    maturation_time.insert(&Fly { sex: Sex::female, genotype: Genotype::AB }, female_maturation_days);
+    maturation_time.insert(&Fly { sex: Sex::female, genotype: Genotype::BB }, female_maturation_days);
+    maturation_time.insert(&Fly { sex: Sex::male, genotype: Genotype::AA }, male_maturation_days_aa);
+    maturation_time.insert(&Fly { sex: Sex::male, genotype: Genotype::AB }, male_maturation_days_ab);
+    maturation_time.insert(&Fly { sex: Sex::male, genotype: Genotype::BB }, male_maturation_days_bb);
 
     // Proportions for weighted sampling with `choose_weighted`
     let proportion_sexes = vec![
@@ -148,43 +174,118 @@ fn main() {
         ProportionGenotype{ genotype: Genotype::BB, proportion: proportion_bb },
     ];
 
+    /// Generate first generation of eggs
     // Create initial fly and eggs vectors
-    let mut individual_adults: Vec<Fly> = Vec::new();
     let mut individual_eggs: Vec<Fly> = Vec::new();
+    let mut individual_eggs_previous: Vec<Fly> = Vec::new();
+    let mut mature_adults: Vec<Fly> = Vec::new();
+    let mut mature_females: Vec<Fly> = Vec::new();
+    let mut mature_males: Vec<Fly> = Vec::new();
 
-    // Generate first generation of eggs
     let number_adults = number_eggs_per_generation as f64 * survival_global;
     let number_adults = number_adults as u32;
 
-    let individual_eggs_bogus = create_first_generation(
+    let mut individual_adults = create_first_generation(
         &number_adults,
         &proportion_sexes,
         &proportion_genotypes
         );
 
+    /// Iterate over generations
     for gen in 1..=number_generations {
 
-        println!("\nGeneration: {:5}", gen);
+        println!("\n= ( Generation: {:5} ) ===========", gen);
 
         // Egg survival to adulthood (except generation 1)
-        if gen != 1 {
-            println!("--Eggs");
+        println!("- Eggs");
+        println!("  Number of eggs: {}", individual_eggs.len());
+        println!("  Number of adults before: {}", individual_adults.len());
 
-            // TODO egg survival by sex and genotype
+        if gen != 1 {
+            // Egg survival by sex and genotype
+            for egg in individual_eggs.iter() {
+
+                let random_number: f64 = rng.gen();
+
+                if random_number < *egg_survival.get(&egg).unwrap() {
+                    individual_adults.push(*egg);
+                }
+            }
         }
 
-        println!("--Adults");
+        individual_eggs_previous = individual_eggs.to_vec();
+        individual_eggs.clear();
+        println!("  Number of adults after: {}", individual_adults.len());
 
-        // TODO Survival to reproduction
-        // 1) environment duration
-        // 2) frequency dependence
+        /// Survival to reproduction
+        // Environment duration
+        println!("- Environment");
+        let environment_duration_min: f64 = environment_time - environment_time_variation;
+        let environment_duration_max: f64 = environment_time + environment_time_variation;
+        let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
 
-        // TODO Reproduction
+        for adult in individual_adults.iter() {
+            // Environment duration
+            let environment_duration = environment_range.sample(&mut rng);
+
+            // Sample development time
+            let adult_maturation = *maturation_time.get(&adult).unwrap();
+            let adult_maturation_cv = adult_maturation * maturation_cv;
+            let adult_maturation_lower = adult_maturation - adult_maturation_cv;
+            let adult_maturation_upper = adult_maturation + adult_maturation_cv;
+            let adult_maturation_range = Uniform::from(adult_maturation_lower..adult_maturation_upper);
+            let m1 = adult_maturation_range.sample(&mut rng);
+            let m2 = adult_maturation_range.sample(&mut rng);
+            let m3 = adult_maturation_range.sample(&mut rng);
+            let m = (m1 * m2 * m3).powf(1.0/3.0);
+
+            // Decide survival
+            if environment_duration >= m {
+                mature_adults.push(Fly { sex: adult.sex, genotype: adult.genotype });
+
+                if adult.sex == Sex::female {
+                    mature_females.push(Fly { sex: adult.sex, genotype: adult.genotype });
+                } else {
+                    mature_males.push(Fly { sex: adult.sex, genotype: adult.genotype });
+                }
+            }
+        }
+        println!("  Number of adults after environment: {}", mature_adults.len());
+        println!("  Number of females: {}", mature_females.len());
+        println!("  Number of males: {}", mature_males.len());
+
+        individual_adults.clear();
+
+        /// TODO Reproduction
+        println!("- Reproduction");
+        // Count male genotypes
+        let male_genotypes = mature_males.iter().collect::<Counter<_>>();
+        let mut male_freq_dep: HashMap<&Genotype, f64> = HashMap::new();
+        //male_freq_dep.insert(&Genotype::AA, f64::from(male_genotypes.get(&Fly {sex: Sex::male, genotype: Genotype::AA }).unwrap()) / (mature_males.len() as f64));
+
+
+
+
+        let mut sum = 0;
+        for (k, v) in male_genotypes.iter() {
+            sum += v;
+        }
+        println!("Counter: {:?}", male_genotypes);
+        println!("Sum: {}", sum);
+
         // for each female, pick a male randomly (weighted)
         // for each egg, pick sex (weighted) and genotype (from available males) randomly
+        println!("- Frequency");
+        // Frequency dependence
 
-        // TODO end simulation
+        /// TODO end simulation
         // if either AA or BB alleles get fixated, end simulation
         // report results
+        let simulation_finished = false;
+        if simulation_finished {
+            break;
+        }
     }
+
+    println!("");
 }
