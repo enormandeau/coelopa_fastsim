@@ -322,11 +322,11 @@ fn main() {
 
         let proportion_genotypes = vec![
             ProportionGenotype{ genotype: Genotype::AA,
-                proportion: male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient },
+            proportion: male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient },
             ProportionGenotype{ genotype: Genotype::AB,
-                proportion: male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient },
+            proportion: male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient },
             ProportionGenotype{ genotype: Genotype::BB,
-                proportion: male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient },
+            proportion: male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient },
         ];
 
         // for each female, pick a male randomly (weighted)
