@@ -1,7 +1,7 @@
 #![allow(warnings)]
-/// Modules
-extern crate clap;
-use clap::{Arg, App, SubCommand};
+//// Modules
+//extern crate clap;
+//use clap::{Arg, App, SubCommand};
 
 extern crate rand;
 use rand::prelude::*;
@@ -9,13 +9,12 @@ use rand::Rng;
 use rand::distributions::Uniform;
 
 use std::collections::HashMap;
-use counter::Counter;
 use std::vec::Vec;
 use std::io::prelude::*;
-use std::io;
-use std::env;
+//use std::io;
+//use std::env;
 
-/// Enums
+//// Enums
 #[derive(Copy,Clone)]
 #[derive(Hash, Eq, PartialEq, Debug)]
 enum Sex { female, male }
@@ -45,7 +44,7 @@ impl std::fmt::Display for Genotype {
     }
 }
 
-/// Structs
+//// Structs
 #[derive(Copy,Clone)]
 #[derive(Hash, Eq, PartialEq, Debug)]
 struct Fly {
@@ -73,7 +72,7 @@ struct ProportionGenotype {
     proportion: f64
 }
 
-/// Functions
+//// Functions
 fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
                            pgenotypes: &Vec<ProportionGenotype>) -> Vec<Fly> {
 
@@ -91,9 +90,9 @@ fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
     v
 }
 
-/// Main
+//// Main
 fn main() {
-    /// Parameters
+    //// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
     let number_generations = 5;
@@ -131,7 +130,7 @@ fn main() {
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
     let proportion_males = 1.0 - proportion_females;
 
-    /// Survival and reproduction parameters
+    //// Survival and reproduction parameters
     // Survival from egg to adult
     let mut egg_survival: HashMap<&Fly, f64> = HashMap::new();
     egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, survival_females_aa);
@@ -174,7 +173,7 @@ fn main() {
         ProportionGenotype{ genotype: Genotype::BB, proportion: proportion_bb },
     ];
 
-    /// Generate first generation of eggs
+    //// Generate first generation of eggs
     // Create initial fly and eggs vectors
     let mut individual_eggs: Vec<Fly> = Vec::new();
     let mut individual_eggs_previous: Vec<Fly> = Vec::new();
@@ -191,7 +190,7 @@ fn main() {
         &proportion_genotypes
         );
 
-    /// Iterate over generations
+    //// Iterate over generations
     for gen in 1..=number_generations {
 
         println!("\n= ( Generation: {:5} ) ===========", gen);
@@ -217,7 +216,7 @@ fn main() {
         individual_eggs.clear();
         println!("  Number of adults after: {}", individual_adults.len());
 
-        /// Survival to reproduction
+        //// Survival to reproduction
         // Environment duration
         println!("-Environment");
         let environment_duration_min: f64 = environment_time - environment_time_variation;
@@ -256,7 +255,7 @@ fn main() {
 
         individual_adults.clear();
 
-        /// TODO Reproduction
+        //// TODO Reproduction
         println!("-Reproduction");
         // Count male genotypes
         let number_mature_males = mature_males.len();
@@ -284,21 +283,43 @@ fn main() {
         male_freq_dep.insert(&Genotype::BB,
                              1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa));
 
+        // Normalize probabilities to 1.0
         let total_coefficient: f64 = male_freq_dep.values().sum();
 
-        // Normalize probabilities to 1.0
-        let mut male_freq_dep_norm: HashMap<&Genotype, f64> = HashMap::new();
-        male_freq_dep_norm.insert(&Genotype::AA, male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient);
-        male_freq_dep_norm.insert(&Genotype::AB, male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient);
-        male_freq_dep_norm.insert(&Genotype::BB, male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient);
-        let total_coefficient: f64 = male_freq_dep_norm.values().sum();
+        let proportion_genotypes = vec![
+            ProportionGenotype{ genotype: Genotype::AA,
+                proportion: male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient },
+            ProportionGenotype{ genotype: Genotype::AB,
+                proportion: male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient },
+            ProportionGenotype{ genotype: Genotype::BB,
+                proportion: male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient },
+        ];
 
         // for each female, pick a male randomly (weighted)
         // for each egg, pick sex (weighted) and genotype (from available males) randomly
         println!("- Frequency");
+        for female in mature_females.iter() {
+            // Pick weighted random mate genotype
+            let random_male_genotype = proportion_genotypes.choose_weighted(&mut rng, |item| item.proportion).unwrap().genotype;
+
+            let num_eggs = *female_eggs.get(female).unwrap() as u32;
+            println!("Female: {} ({} eggs), mate's sex: {}", female, num_eggs, random_male_genotype);
+
+            for egg in 1..=num_eggs {
+                // Get female allele
+
+                // Get male allele
+
+                // Create egg
+
+                println!("  Egg {:3}, a1: {}, a2: {}", egg, 1, 1);
+
+            }
+        }
+
         // Frequency dependence
 
-        /// TODO end simulation
+        //// TODO end simulation
         // if either AA or BB alleles get fixated, end simulation
         // report results
         let simulation_finished = false;
