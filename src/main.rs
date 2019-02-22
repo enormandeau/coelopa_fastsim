@@ -4,20 +4,22 @@
 //use clap::{Arg, App, SubCommand};
 
 extern crate rand;
+use rand::distributions::Uniform;
 use rand::prelude::*;
 use rand::Rng;
-use rand::distributions::Uniform;
 
 use std::collections::HashMap;
-use std::vec::Vec;
 use std::io::prelude::*;
+use std::vec::Vec;
 //use std::io;
 //use std::env;
 
 //// Enums
-#[derive(Copy,Clone)]
-#[derive(Hash, Eq, PartialEq, Debug)]
-enum Sex { female, male }
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
+enum Sex {
+    female,
+    male,
+}
 
 impl std::fmt::Display for Sex {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -29,9 +31,12 @@ impl std::fmt::Display for Sex {
     }
 }
 
-#[derive(Copy,Clone)]
-#[derive(Hash, Eq, PartialEq, Debug)]
-enum Genotype { AA, AB, BB }
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
+enum Genotype {
+    AA,
+    AB,
+    BB,
+}
 
 impl std::fmt::Display for Genotype {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -45,11 +50,10 @@ impl std::fmt::Display for Genotype {
 }
 
 //// Structs
-#[derive(Copy,Clone)]
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
 struct Fly {
     sex: Sex,
-    genotype: Genotype
+    genotype: Genotype,
 }
 
 impl std::fmt::Display for Fly {
@@ -58,33 +62,42 @@ impl std::fmt::Display for Fly {
     }
 }
 
-#[derive(Debug)]
-#[derive(Copy,Clone)]
+#[derive(Debug, Copy, Clone)]
 struct ProportionSexe {
     sex: Sex,
-    proportion: f64
+    proportion: f64,
 }
 
-#[derive(Debug)]
-#[derive(Copy,Clone)]
+#[derive(Debug, Copy, Clone)]
 struct ProportionGenotype {
     genotype: Genotype,
-    proportion: f64
+    proportion: f64,
 }
 
 //// Functions
-fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
-                           pgenotypes: &Vec<ProportionGenotype>) -> Vec<Fly> {
-
+fn create_first_generation(
+    n: &u32,
+    psexes: &Vec<ProportionSexe>,
+    pgenotypes: &Vec<ProportionGenotype>,
+) -> Vec<Fly> {
     let mut rng = rand::thread_rng();
     let mut v = Vec::new();
 
     // Create adults with random sex and genotype using proportions
     for _ in 0..*n {
-        let sex = psexes.choose_weighted(&mut rng, |item| item.proportion).unwrap().sex;
-        let genotype = pgenotypes.choose_weighted(&mut rng, |item| item.proportion).unwrap().genotype;
+        let sex = psexes
+            .choose_weighted(&mut rng, |item| item.proportion)
+            .unwrap()
+            .sex;
+        let genotype = pgenotypes
+            .choose_weighted(&mut rng, |item| item.proportion)
+            .unwrap()
+            .genotype;
 
-        v.push(Fly{ sex: sex, genotype: genotype });
+        v.push(Fly {
+            sex: sex,
+            genotype: genotype,
+        });
     }
 
     v
@@ -101,7 +114,7 @@ fn allele_from_parent(p: &Fly) -> char {
             } else {
                 'B'
             }
-        },
+        }
         Genotype::BB => 'B',
     }
 }
@@ -114,10 +127,7 @@ fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
         Genotype::BB
     } else if a1 == 'A' && a2 == 'B' {
         Genotype::AB
-    } else if a1 == 'B' && a2 == 'A' {
-        Genotype::AB
     } else {
-        println!("a1 {}, a2 {}", a1, a2);
         Genotype::AB
     }
 }
@@ -165,44 +175,167 @@ fn main() {
     //// Survival and reproduction parameters
     // Survival from egg to adult
     let mut egg_survival: HashMap<&Fly, f64> = HashMap::new();
-    egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, survival_females_aa);
-    egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::AB }, survival_females_ab);
-    egg_survival.insert(&Fly { sex: Sex::female, genotype: Genotype::BB }, survival_females_bb);
-    egg_survival.insert(&Fly { sex: Sex::male, genotype: Genotype::AA }, survival_males_aa);
-    egg_survival.insert(&Fly { sex: Sex::male, genotype: Genotype::AB }, survival_males_ab);
-    egg_survival.insert(&Fly { sex: Sex::male, genotype: Genotype::BB }, survival_males_bb);
+    egg_survival.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::AA,
+        },
+        survival_females_aa,
+    );
+    egg_survival.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::AB,
+        },
+        survival_females_ab,
+    );
+    egg_survival.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::BB,
+        },
+        survival_females_bb,
+    );
+    egg_survival.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::AA,
+        },
+        survival_males_aa,
+    );
+    egg_survival.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::AB,
+        },
+        survival_males_ab,
+    );
+    egg_survival.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::BB,
+        },
+        survival_males_bb,
+    );
 
     // Number of eggs per female genotype
     let mut female_eggs: HashMap<&Fly, f64> = HashMap::new();
-    female_eggs.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, number_eggs_per_female * female_eggs_aa);
-    female_eggs.insert(&Fly { sex: Sex::female, genotype: Genotype::AB }, number_eggs_per_female * female_eggs_ab);
-    female_eggs.insert(&Fly { sex: Sex::female, genotype: Genotype::BB }, number_eggs_per_female * female_eggs_bb);
+    female_eggs.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::AA,
+        },
+        number_eggs_per_female * female_eggs_aa,
+    );
+    female_eggs.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::AB,
+        },
+        number_eggs_per_female * female_eggs_ab,
+    );
+    female_eggs.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::BB,
+        },
+        number_eggs_per_female * female_eggs_bb,
+    );
 
     // Male reproductive sucess per genotype
     let mut male_success: HashMap<&Fly, f64> = HashMap::new();
-    male_success.insert(&Fly { sex: Sex::male, genotype: Genotype::AA }, male_success_aa);
-    male_success.insert(&Fly { sex: Sex::male, genotype: Genotype::AB }, male_success_ab);
-    male_success.insert(&Fly { sex: Sex::male, genotype: Genotype::BB }, male_success_bb);
+    male_success.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::AA,
+        },
+        male_success_aa,
+    );
+    male_success.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::AB,
+        },
+        male_success_ab,
+    );
+    male_success.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::BB,
+        },
+        male_success_bb,
+    );
 
     // Maturation time
     let mut maturation_time: HashMap<&Fly, f64> = HashMap::new();
-    maturation_time.insert(&Fly { sex: Sex::female, genotype: Genotype::AA }, female_maturation_days);
-    maturation_time.insert(&Fly { sex: Sex::female, genotype: Genotype::AB }, female_maturation_days);
-    maturation_time.insert(&Fly { sex: Sex::female, genotype: Genotype::BB }, female_maturation_days);
-    maturation_time.insert(&Fly { sex: Sex::male, genotype: Genotype::AA }, male_maturation_days_aa);
-    maturation_time.insert(&Fly { sex: Sex::male, genotype: Genotype::AB }, male_maturation_days_ab);
-    maturation_time.insert(&Fly { sex: Sex::male, genotype: Genotype::BB }, male_maturation_days_bb);
+    maturation_time.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::AA,
+        },
+        female_maturation_days,
+    );
+    maturation_time.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::AB,
+        },
+        female_maturation_days,
+    );
+    maturation_time.insert(
+        &Fly {
+            sex: Sex::female,
+            genotype: Genotype::BB,
+        },
+        female_maturation_days,
+    );
+    maturation_time.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::AA,
+        },
+        male_maturation_days_aa,
+    );
+    maturation_time.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::AB,
+        },
+        male_maturation_days_ab,
+    );
+    maturation_time.insert(
+        &Fly {
+            sex: Sex::male,
+            genotype: Genotype::BB,
+        },
+        male_maturation_days_bb,
+    );
 
     // Proportions for weighted sampling with `choose_weighted`
     let proportion_sexes = vec![
-        ProportionSexe { sex: Sex::female, proportion: proportion_females },
-        ProportionSexe { sex: Sex::male, proportion: proportion_males },
+        ProportionSexe {
+            sex: Sex::female,
+            proportion: proportion_females,
+        },
+        ProportionSexe {
+            sex: Sex::male,
+            proportion: proportion_males,
+        },
     ];
 
     let proportion_genotypes = vec![
-        ProportionGenotype { genotype: Genotype::AA, proportion: proportion_aa },
-        ProportionGenotype { genotype: Genotype::AB, proportion: proportion_ab },
-        ProportionGenotype { genotype: Genotype::BB, proportion: proportion_bb },
+        ProportionGenotype {
+            genotype: Genotype::AA,
+            proportion: proportion_aa,
+        },
+        ProportionGenotype {
+            genotype: Genotype::AB,
+            proportion: proportion_ab,
+        },
+        ProportionGenotype {
+            genotype: Genotype::BB,
+            proportion: proportion_bb,
+        },
     ];
 
     //// Generate first generation of eggs
@@ -216,15 +349,11 @@ fn main() {
     let number_adults = number_eggs_per_generation as f64 * survival_global;
     let number_adults = number_adults as u32;
 
-    let mut individual_adults = create_first_generation(
-        &number_adults,
-        &proportion_sexes,
-        &proportion_genotypes
-        );
+    let mut individual_adults =
+        create_first_generation(&number_adults, &proportion_sexes, &proportion_genotypes);
 
     //// Iterate over generations
     for gen in 1..=number_generations {
-
         println!("\n= ( Generation: {:5} ) ===========", gen);
 
         // Egg survival to adulthood (except generation 1)
@@ -234,7 +363,6 @@ fn main() {
         if gen != 1 {
             // Egg survival by sex and genotype
             for egg in individual_eggs.iter() {
-
                 let random_number: f64 = rng.gen();
 
                 if random_number < *egg_survival.get(&egg).unwrap() {
@@ -266,20 +394,30 @@ fn main() {
             let adult_maturation_cv = adult_maturation * maturation_cv;
             let adult_maturation_lower = adult_maturation - adult_maturation_cv;
             let adult_maturation_upper = adult_maturation + adult_maturation_cv;
-            let adult_maturation_range = Uniform::from(adult_maturation_lower..adult_maturation_upper);
+            let adult_maturation_range =
+                Uniform::from(adult_maturation_lower..adult_maturation_upper);
             let m1 = adult_maturation_range.sample(&mut rng);
             let m2 = adult_maturation_range.sample(&mut rng);
             let m3 = adult_maturation_range.sample(&mut rng);
-            let m = (m1 * m2 * m3).powf(1.0/3.0);
+            let m = (m1 * m2 * m3).powf(1.0 / 3.0);
 
             // Decide survival
             if environment_duration >= m {
-                mature_adults.push(Fly { sex: adult.sex, genotype: adult.genotype });
+                mature_adults.push(Fly {
+                    sex: adult.sex,
+                    genotype: adult.genotype,
+                });
 
                 if adult.sex == Sex::female {
-                    mature_females.push(Fly { sex: adult.sex, genotype: adult.genotype });
+                    mature_females.push(Fly {
+                        sex: adult.sex,
+                        genotype: adult.genotype,
+                    });
                 } else {
-                    mature_males.push(Fly { sex: adult.sex, genotype: adult.genotype });
+                    mature_males.push(Fly {
+                        sex: adult.sex,
+                        genotype: adult.genotype,
+                    });
                 }
             }
         }
@@ -310,23 +448,32 @@ fn main() {
         // Compute frequency dependent selection coefficient
         let mut male_freq_dep: HashMap<&Genotype, f64> = HashMap::new();
         let proportion_male_aa = male_genotype_proportions.get(&Genotype::AA).unwrap();
-        male_freq_dep.insert(&Genotype::AA,
-                             1.0);
-        male_freq_dep.insert(&Genotype::AB,
-                             1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa) / 2.0);
-        male_freq_dep.insert(&Genotype::BB,
-                             1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa));
+        male_freq_dep.insert(&Genotype::AA, 1.0);
+        male_freq_dep.insert(
+            &Genotype::AB,
+            1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa) / 2.0,
+        );
+        male_freq_dep.insert(
+            &Genotype::BB,
+            1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa),
+        );
 
         // Normalize probabilities to 1.0
         let total_coefficient: f64 = male_freq_dep.values().sum();
 
         let proportion_genotypes = vec![
-            ProportionGenotype{ genotype: Genotype::AA,
-            proportion: male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient },
-            ProportionGenotype{ genotype: Genotype::AB,
-            proportion: male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient },
-            ProportionGenotype{ genotype: Genotype::BB,
-            proportion: male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient },
+            ProportionGenotype {
+                genotype: Genotype::AA,
+                proportion: male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient,
+            },
+            ProportionGenotype {
+                genotype: Genotype::AB,
+                proportion: male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient,
+            },
+            ProportionGenotype {
+                genotype: Genotype::BB,
+                proportion: male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient,
+            },
         ];
 
         // for each female, pick a male randomly (weighted)
@@ -334,25 +481,36 @@ fn main() {
         for female in mature_females.iter() {
             // Pick weighted random mate genotype
             // TODO Bug Alert!!! Need to multiply weights by proportions of genotypes (if not done)
-            // TODO Bug.. and by male_success
-            let random_male_genotype = proportion_genotypes.choose_weighted(&mut rng, |item| item.proportion).unwrap().genotype;
+            // TODO Bug.. and by male_success ??? Or dows male_freq_dep already contains this info?
+            let random_male_genotype = proportion_genotypes
+                .choose_weighted(&mut rng, |item| item.proportion)
+                .unwrap()
+                .genotype;
 
             let num_eggs = *female_eggs.get(female).unwrap() as u32;
-            //println!("Female: {} ({} eggs), mate's sex: {}", female, num_eggs, random_male_genotype);
 
             for egg in 1..=num_eggs {
                 // Get female allele
                 let female_allele = allele_from_parent(&female);
 
                 // Get male allele
-                let male_allele = allele_from_parent(&Fly { sex: Sex::male, genotype: random_male_genotype } );
+                let male_allele = allele_from_parent(&Fly {
+                    sex: Sex::male,
+                    genotype: random_male_genotype,
+                });
 
                 // Create egg
                 let genotype = genotype_from_alleles(female_allele, male_allele);
                 let random_number: f64 = rng.gen();
-                let sex = if random_number < 0.5 { Sex::female } else { Sex::male };
-                //println!("Genotype {}", genotype);
-                individual_eggs.push(Fly { sex: sex, genotype: genotype } );
+                let sex = if random_number < 0.5 {
+                    Sex::female
+                } else {
+                    Sex::male
+                };
+                individual_eggs.push(Fly {
+                    sex: sex,
+                    genotype: genotype,
+                });
             }
         }
         println!("Number of eggs generated: {}", individual_eggs.len());
@@ -383,7 +541,6 @@ fn main() {
         if count_AA == num_individual_eggs || count_BB == num_individual_eggs {
             break;
         }
-
     }
 
     println!("");
