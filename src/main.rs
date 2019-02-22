@@ -195,14 +195,14 @@ fn main() {
 
     // Proportions for weighted sampling with `choose_weighted`
     let proportion_sexes = vec![
-        ProportionSexe{ sex: Sex::female, proportion: proportion_females },
-        ProportionSexe{ sex: Sex::male, proportion: proportion_males },
+        ProportionSexe { sex: Sex::female, proportion: proportion_females },
+        ProportionSexe { sex: Sex::male, proportion: proportion_males },
     ];
 
     let proportion_genotypes = vec![
-        ProportionGenotype{ genotype: Genotype::AA, proportion: proportion_aa },
-        ProportionGenotype{ genotype: Genotype::AB, proportion: proportion_ab },
-        ProportionGenotype{ genotype: Genotype::BB, proportion: proportion_bb },
+        ProportionGenotype { genotype: Genotype::AA, proportion: proportion_aa },
+        ProportionGenotype { genotype: Genotype::AB, proportion: proportion_ab },
+        ProportionGenotype { genotype: Genotype::BB, proportion: proportion_bb },
     ];
 
     //// Generate first generation of eggs
@@ -352,7 +352,7 @@ fn main() {
                 let random_number: f64 = rng.gen();
                 let sex = if random_number < 0.5 { Sex::female } else { Sex::male };
                 //println!("Genotype {}", genotype);
-                individual_eggs.push(Fly { sex: sex, genotype: genotype });
+                individual_eggs.push(Fly { sex: sex, genotype: genotype } );
             }
         }
         println!("Number of eggs generated: {}", individual_eggs.len());
