@@ -112,7 +112,7 @@ fn main() {
     let male_success_aa = 1.0;
     let male_success_ab = 0.55;
     let male_success_bb = 0.1;
-    let male_freq_dep_coef = 0.0;
+    let male_freq_dep_coef = 1.0;
     let female_eggs_aa = 1.0;
     let female_eggs_ab = 0.97;
     let female_eggs_bb = 0.87;
@@ -197,7 +197,7 @@ fn main() {
         println!("\n= ( Generation: {:5} ) ===========", gen);
 
         // Egg survival to adulthood (except generation 1)
-        println!("- Eggs");
+        println!("-Eggs");
         println!("  Number of eggs: {}", individual_eggs.len());
         println!("  Number of adults before: {}", individual_adults.len());
 
@@ -219,7 +219,7 @@ fn main() {
 
         /// Survival to reproduction
         // Environment duration
-        println!("- Environment");
+        println!("-Environment");
         let environment_duration_min: f64 = environment_time - environment_time_variation;
         let environment_duration_max: f64 = environment_time + environment_time_variation;
         let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
@@ -250,28 +250,48 @@ fn main() {
                 }
             }
         }
-        println!("  Number of adults after environment: {}", mature_adults.len());
+        println!("  Number of adults: {}", mature_adults.len());
         println!("  Number of females: {}", mature_females.len());
         println!("  Number of males: {}", mature_males.len());
 
         individual_adults.clear();
 
         /// TODO Reproduction
-        println!("- Reproduction");
+        println!("-Reproduction");
         // Count male genotypes
-        let male_genotypes = mature_males.iter().collect::<Counter<_>>();
-        let mut male_freq_dep: HashMap<&Genotype, f64> = HashMap::new();
-        //male_freq_dep.insert(&Genotype::AA, f64::from(male_genotypes.get(&Fly {sex: Sex::male, genotype: Genotype::AA }).unwrap()) / (mature_males.len() as f64));
+        let number_mature_males = mature_males.len();
+        let mut male_genotype_counts: HashMap<&Genotype, f64> = HashMap::new();
 
-
-
-
-        let mut sum = 0;
-        for (k, v) in male_genotypes.iter() {
-            sum += v;
+        for male in mature_males.iter() {
+            *male_genotype_counts.entry(&male.genotype).or_insert(0.0) += 1.0;
         }
-        println!("Counter: {:?}", male_genotypes);
-        println!("Sum: {}", sum);
+
+        // Make them into proportions
+        let mut male_genotype_proportions: HashMap<&Genotype, f64> = HashMap::new();
+
+        for (genotype, count) in male_genotype_counts.iter() {
+            let proportion: f64 = count / (number_mature_males as f64);
+            male_genotype_proportions.insert(genotype, proportion);
+        }
+
+        // Compute frequency dependent selection coefficient
+        let mut male_freq_dep: HashMap<&Genotype, f64> = HashMap::new();
+        let proportion_male_aa = male_genotype_proportions.get(&Genotype::AA).unwrap();
+        male_freq_dep.insert(&Genotype::AA,
+                             1.0);
+        male_freq_dep.insert(&Genotype::AB,
+                             1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa) / 2.0);
+        male_freq_dep.insert(&Genotype::BB,
+                             1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa));
+
+        let total_coefficient: f64 = male_freq_dep.values().sum();
+
+        // Normalize probabilities to 1.0
+        let mut male_freq_dep_norm: HashMap<&Genotype, f64> = HashMap::new();
+        male_freq_dep_norm.insert(&Genotype::AA, male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient);
+        male_freq_dep_norm.insert(&Genotype::AB, male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient);
+        male_freq_dep_norm.insert(&Genotype::BB, male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient);
+        let total_coefficient: f64 = male_freq_dep_norm.values().sum();
 
         // for each female, pick a male randomly (weighted)
         // for each egg, pick sex (weighted) and genotype (from available males) randomly
