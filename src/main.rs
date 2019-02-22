@@ -90,18 +90,50 @@ fn create_first_generation(n: &u32, psexes: &Vec<ProportionSexe>,
     v
 }
 
+fn allele_from_parent(p: &Fly) -> char {
+    match p.genotype {
+        Genotype::AA => 'A',
+        Genotype::AB => {
+            let mut rng = rand::thread_rng();
+            let random_number: f64 = rng.gen();
+            if random_number < 0.5 {
+                'A'
+            } else {
+                'B'
+            }
+        },
+        Genotype::BB => 'B',
+    }
+}
+
+fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
+    //TODO debug
+    if a1 == 'A' && a2 == 'A' {
+        Genotype::AA
+    } else if a1 == 'B' && a2 == 'B' {
+        Genotype::BB
+    } else if a1 == 'A' && a2 == 'B' {
+        Genotype::AB
+    } else if a1 == 'B' && a2 == 'A' {
+        Genotype::AB
+    } else {
+        println!("a1 {}, a2 {}", a1, a2);
+        Genotype::AB
+    }
+}
+
 //// Main
 fn main() {
     //// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
-    let number_generations = 5;
-    let number_eggs_per_generation = 10000;
+    let number_generations = 100;
+    let number_eggs_per_generation = 1000;
     let number_eggs_per_female = 50 as f64;
     let proportion_females = 0.5;
     let proportion_aa = 0.07;
     let proportion_bb = 0.44;
-    let survival_global = 0.3;
+    let survival_global = 0.9;
     let survival_females_aa = 0.71;
     let survival_females_ab = 0.9;
     let survival_females_bb = 1.0;
@@ -198,7 +230,6 @@ fn main() {
         // Egg survival to adulthood (except generation 1)
         println!("-Eggs");
         println!("  Number of eggs: {}", individual_eggs.len());
-        println!("  Number of adults before: {}", individual_adults.len());
 
         if gen != 1 {
             // Egg survival by sex and genotype
@@ -222,6 +253,9 @@ fn main() {
         let environment_duration_min: f64 = environment_time - environment_time_variation;
         let environment_duration_max: f64 = environment_time + environment_time_variation;
         let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
+        mature_adults.clear();
+        mature_females.clear();
+        mature_males.clear();
 
         for adult in individual_adults.iter() {
             // Environment duration
@@ -255,7 +289,7 @@ fn main() {
 
         individual_adults.clear();
 
-        //// TODO Reproduction
+        //// Reproduction
         println!("-Reproduction");
         // Count male genotypes
         let number_mature_males = mature_males.len();
@@ -297,35 +331,59 @@ fn main() {
 
         // for each female, pick a male randomly (weighted)
         // for each egg, pick sex (weighted) and genotype (from available males) randomly
-        println!("- Frequency");
         for female in mature_females.iter() {
             // Pick weighted random mate genotype
+            // TODO Bug Alert!!! Need to multiply weights by proportions of genotypes (if not done)
+            // TODO Bug.. and by male_success
             let random_male_genotype = proportion_genotypes.choose_weighted(&mut rng, |item| item.proportion).unwrap().genotype;
 
             let num_eggs = *female_eggs.get(female).unwrap() as u32;
-            println!("Female: {} ({} eggs), mate's sex: {}", female, num_eggs, random_male_genotype);
+            //println!("Female: {} ({} eggs), mate's sex: {}", female, num_eggs, random_male_genotype);
 
             for egg in 1..=num_eggs {
                 // Get female allele
+                let female_allele = allele_from_parent(&female);
 
                 // Get male allele
+                let male_allele = allele_from_parent(&Fly { sex: Sex::male, genotype: random_male_genotype } );
 
                 // Create egg
-
-                println!("  Egg {:3}, a1: {}, a2: {}", egg, 1, 1);
-
+                let genotype = genotype_from_alleles(female_allele, male_allele);
+                let random_number: f64 = rng.gen();
+                let sex = if random_number < 0.5 { Sex::female } else { Sex::male };
+                //println!("Genotype {}", genotype);
+                individual_eggs.push(Fly { sex: sex, genotype: genotype });
             }
         }
+        println!("Number of eggs generated: {}", individual_eggs.len());
 
-        // Frequency dependence
+        // Shuffle and keep number_eggs_per_generation eggs
+        rng.shuffle(&mut individual_eggs);
+        individual_eggs = individual_eggs[..number_eggs_per_generation].to_vec();
+        println!("Number of eggs kept: {}", individual_eggs.len());
+
+        //// TODO Report results
 
         //// TODO end simulation
         // if either AA or BB alleles get fixated, end simulation
-        // report results
-        let simulation_finished = false;
-        if simulation_finished {
+        let mut count_AA = 0;
+        let mut count_AB = 0;
+        let mut count_BB = 0;
+        for egg in individual_eggs.iter() {
+            match egg.genotype {
+                Genotype::AA => count_AA += 1,
+                Genotype::AB => count_AB += 1,
+                Genotype::BB => count_BB += 1,
+            }
+        }
+
+        println!("AA: {}, AB: {}, BB: {}", count_AA, count_AB, count_BB);
+
+        let num_individual_eggs = individual_eggs.len();
+        if count_AA == num_individual_eggs || count_BB == num_individual_eggs {
             break;
         }
+
     }
 
     println!("");
