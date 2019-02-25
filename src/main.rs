@@ -173,9 +173,9 @@ fn main() {
     //// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
-    let number_generations = 30;
+    let number_generations = 5;
     let proportion_females = 0.5;
-    let number_eggs_per_generation = 10000;
+    let number_eggs_per_generation = 1000;
     let number_eggs_per_female = 20 as f64;
 
     let proportion_aa = 0.07;
@@ -377,7 +377,7 @@ fn main() {
         create_first_generation(&number_adults, &proportion_sexes, &proportion_genotypes);
 
     //// Iterate over generations
-    println!("Gen\tStage\tNum\tAA\tAB\tBB");
+    println!("Gen\tStage\tNum\tAA\tAB\tBB\n");
     for gen in 1..=number_generations {
         // Egg survival to adulthood (except generation 1)
         report_genotypes(&individual_eggs, &gen, &"eggs");
@@ -387,7 +387,6 @@ fn main() {
             individual_adults.clear();
 
             for egg in individual_eggs.iter() {
-                //println!("Survival: {}", *egg_survival.get(&egg).unwrap() * survival_global);
                 let random_number: f64 = rng.gen();
 
                 if random_number < *egg_survival.get(&egg).unwrap() * survival_global {
@@ -402,12 +401,12 @@ fn main() {
 
         //// Survival to reproduction
         // Environment duration
-        let environment_duration_min: f64 = environment_time - environment_time_variation;
-        let environment_duration_max: f64 = environment_time + environment_time_variation;
-        let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
         mature_adults.clear();
         mature_females.clear();
         mature_males.clear();
+        let environment_duration_min: f64 = environment_time - environment_time_variation;
+        let environment_duration_max: f64 = environment_time + environment_time_variation;
+        let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
 
         for adult in individual_adults.iter() {
             // Environment duration
@@ -490,21 +489,21 @@ fn main() {
             &Genotype::AA,
             male_genotype_proportions.get(&Genotype::AA).unwrap()
                 * male_success.get(&Genotype::AA).unwrap()
-                * male_genotype_proportions.get(&Genotype::AA).unwrap(),
+                * male_freq_dep.get(&Genotype::AA).unwrap(),
         );
 
         male_genotype_probabilities.insert(
             &Genotype::AB,
             male_genotype_proportions.get(&Genotype::AB).unwrap()
                 * male_success.get(&Genotype::AB).unwrap()
-                * male_genotype_proportions.get(&Genotype::AB).unwrap(),
+                * male_freq_dep.get(&Genotype::AB).unwrap(),
         );
 
         male_genotype_probabilities.insert(
             &Genotype::BB,
             male_genotype_proportions.get(&Genotype::BB).unwrap()
                 * male_success.get(&Genotype::BB).unwrap()
-                * male_genotype_proportions.get(&Genotype::BB).unwrap(),
+                * male_freq_dep.get(&Genotype::BB).unwrap(),
         );
         // Normalize probabilities to 1.0
         let total_coefficient: f64 = male_genotype_probabilities.values().sum();
@@ -565,7 +564,14 @@ fn main() {
 
         // Shuffle and keep number_eggs_per_generation eggs
         rng.shuffle(&mut individual_eggs);
-        individual_eggs = individual_eggs[..number_eggs_per_generation].to_vec();
+        let mut keep_n_eggs = number_eggs_per_generation;
+        let number_eggs = individual_eggs.len();
+
+        if number_eggs < number_eggs_per_generation {
+            keep_n_eggs = number_eggs;
+        }
+
+        individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
         //report_genotypes(&individual_eggs, &gen, &"eggs");
 
         // if either AA or BB alleles get fixated, end simulation
