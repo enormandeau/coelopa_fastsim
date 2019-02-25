@@ -144,9 +144,7 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
     }
 
     if samples.len() == 0 {
-
         genotype_proportions
-
     } else {
         for i in 0..3 {
             genotype_proportions[i] = genotype_counts[i] as f64 / samples.len() as f64;
@@ -288,9 +286,9 @@ fn main() {
 
     // Male reproductive sucess per genotype
     let mut male_success: HashMap<&Genotype, f64> = HashMap::new();
-    male_success.insert( &Genotype::AA, male_success_aa,);
-    male_success.insert( &Genotype::AB, male_success_ab,);
-    male_success.insert( &Genotype::BB, male_success_bb,);
+    male_success.insert(&Genotype::AA, male_success_aa);
+    male_success.insert(&Genotype::AB, male_success_ab);
+    male_success.insert(&Genotype::BB, male_success_bb);
 
     // Maturation time
     let mut maturation_time: HashMap<&Fly, f64> = HashMap::new();
@@ -439,7 +437,6 @@ fn main() {
                         sex: adult.sex,
                         genotype: adult.genotype,
                     });
-
                 } else {
                     mature_males.push(Fly {
                         sex: adult.sex,
@@ -489,35 +486,44 @@ fn main() {
         // Compute male genotype probabilities for mating
         //TODO Bug: does not behave has python simulation script
         let mut male_genotype_probabilities: HashMap<&Genotype, f64> = HashMap::new();
-        male_genotype_probabilities.insert(&Genotype::AA,
-                                           male_genotype_proportions.get(&Genotype::AA).unwrap() *
-                                           male_success.get(&Genotype::AA).unwrap() *
-                                           male_genotype_proportions.get(&Genotype::AA).unwrap());
+        male_genotype_probabilities.insert(
+            &Genotype::AA,
+            male_genotype_proportions.get(&Genotype::AA).unwrap()
+                * male_success.get(&Genotype::AA).unwrap()
+                * male_genotype_proportions.get(&Genotype::AA).unwrap(),
+        );
 
-        male_genotype_probabilities.insert(&Genotype::AB,
-                                           male_genotype_proportions.get(&Genotype::AB).unwrap() *
-                                           male_success.get(&Genotype::AB).unwrap() *
-                                           male_genotype_proportions.get(&Genotype::AB).unwrap());
+        male_genotype_probabilities.insert(
+            &Genotype::AB,
+            male_genotype_proportions.get(&Genotype::AB).unwrap()
+                * male_success.get(&Genotype::AB).unwrap()
+                * male_genotype_proportions.get(&Genotype::AB).unwrap(),
+        );
 
-        male_genotype_probabilities.insert(&Genotype::BB,
-                                           male_genotype_proportions.get(&Genotype::BB).unwrap() *
-                                           male_success.get(&Genotype::BB).unwrap() *
-                                           male_genotype_proportions.get(&Genotype::BB).unwrap());
+        male_genotype_probabilities.insert(
+            &Genotype::BB,
+            male_genotype_proportions.get(&Genotype::BB).unwrap()
+                * male_success.get(&Genotype::BB).unwrap()
+                * male_genotype_proportions.get(&Genotype::BB).unwrap(),
+        );
         // Normalize probabilities to 1.0
         let total_coefficient: f64 = male_genotype_probabilities.values().sum();
 
         let proportion_genotypes = vec![
             ProportionGenotype {
                 genotype: Genotype::AA,
-                proportion: male_genotype_probabilities.get(&Genotype::AA).unwrap() / total_coefficient,
+                proportion: male_genotype_probabilities.get(&Genotype::AA).unwrap()
+                    / total_coefficient,
             },
             ProportionGenotype {
                 genotype: Genotype::AB,
-                proportion: male_genotype_probabilities.get(&Genotype::AB).unwrap() / total_coefficient,
+                proportion: male_genotype_probabilities.get(&Genotype::AB).unwrap()
+                    / total_coefficient,
             },
             ProportionGenotype {
                 genotype: Genotype::BB,
-                proportion: male_genotype_probabilities.get(&Genotype::BB).unwrap() / total_coefficient,
+                proportion: male_genotype_probabilities.get(&Genotype::BB).unwrap()
+                    / total_coefficient,
             },
         ];
 
