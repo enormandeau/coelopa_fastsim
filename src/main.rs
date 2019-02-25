@@ -483,7 +483,6 @@ fn main() {
         );
 
         // Compute male genotype probabilities for mating
-        //TODO Bug: does not behave has python simulation script
         let mut male_genotype_probabilities: HashMap<&Genotype, f64> = HashMap::new();
         male_genotype_probabilities.insert(
             &Genotype::AA,

@@ -2,11 +2,9 @@
 
 Coelopa inversion selection simulation in Rust
 
+On the order of 1000 times faster than the Python script
+
 ## TODO
 
 - Argument parsing
-- Populate global variables with HashMaps
-- Eggs to adult survival
-- Environmental selection
-- Frequency dependent selection
-- Reproduction
+- Report genotype frequencies per generation to output file
