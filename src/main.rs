@@ -148,9 +148,7 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
 
     if samples.len() == 0 {
         genotype_proportions
-
     } else {
-
         for i in 0..3 {
             genotype_proportions[i] = genotype_counts[i] as f64 / samples.len() as f64;
         }
@@ -162,8 +160,15 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
 fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &str) {
     // TODO Report results to file
     let genotypes = get_genotype_proportions(&samples);
-    println!("{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
-             generation, lifestage, samples.len(), genotypes[0], genotypes[1], genotypes[2]);
+    println!(
+        "{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
+        generation,
+        lifestage,
+        samples.len(),
+        genotypes[0],
+        genotypes[1],
+        genotypes[2]
+    );
 }
 
 //// Main
@@ -395,7 +400,6 @@ fn main() {
     //// Iterate over generations
     println!("Gen\tStage\tNum\tAA\tAB\tBB");
     for gen in 1..=number_generations {
-
         // Egg survival to adulthood (except generation 1)
         //println!("\n\n-Eggs");
         report_genotypes(&individual_eggs, &gen, &"eggs");
@@ -575,7 +579,7 @@ fn main() {
         //println!("AA: {}, AB: {}, BB: {}", count_AA, count_AB, count_BB);
 
         let num_individual_eggs = individual_eggs.len();
-        if (count_AA == 0 && count_AB ==0) || (count_BB == 0 && count_AB == 0) {
+        if (count_AA == 0 && count_AB == 0) || (count_BB == 0 && count_AB == 0) {
             println!("Alleles fixated on generation {}!", gen);
             break;
         }
