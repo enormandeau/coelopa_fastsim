@@ -132,37 +132,77 @@ fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
     }
 }
 
+fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
+    let mut genotype_counts: [i32; 3] = [0, 0, 0];
+    let mut genotype_proportions: [f64; 3] = [0.0, 0.0, 0.0];
+
+    for s in samples.iter() {
+        let genotype = s.genotype;
+
+        match genotype {
+            Genotype::AA => genotype_counts[0] += 1,
+            Genotype::AB => genotype_counts[1] += 1,
+            Genotype::BB => genotype_counts[2] += 1,
+        };
+    }
+
+    if samples.len() == 0 {
+        genotype_proportions
+
+    } else {
+
+        for i in 0..3 {
+            genotype_proportions[i] = genotype_counts[i] as f64 / samples.len() as f64;
+        }
+
+        genotype_proportions
+    }
+}
+
+fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &str) {
+    // TODO Report results to file
+    let genotypes = get_genotype_proportions(&samples);
+    println!("{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
+             generation, lifestage, samples.len(), genotypes[0], genotypes[1], genotypes[2]);
+}
+
 //// Main
 fn main() {
     //// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
-    let number_generations = 100;
+    let number_generations = 30;
+    let proportion_females = 0.5;
     let number_eggs_per_generation = 1000;
     let number_eggs_per_female = 50 as f64;
-    let proportion_females = 0.5;
+
     let proportion_aa = 0.07;
     let proportion_bb = 0.44;
-    let survival_global = 0.9;
+
+    let survival_global = 0.3;
     let survival_females_aa = 0.71;
     let survival_females_ab = 0.9;
     let survival_females_bb = 1.0;
     let survival_males_aa = 0.81;
     let survival_males_ab = 1.0;
-    let survival_males_bb = 1.0;
-    let male_success_aa = 1.0;
-    let male_success_ab = 0.55;
-    let male_success_bb = 0.1;
-    let male_freq_dep_coef = 1.0;
+    let survival_males_bb = 0.88;
+
     let female_eggs_aa = 1.0;
     let female_eggs_ab = 0.97;
     let female_eggs_bb = 0.87;
+
+    let male_success_aa = 1.0;
+    let male_success_ab = 0.55;
+    let male_success_bb = 0.1;
+    let male_freq_dep_coef = 0.1;
+
     let female_maturation_days = 8.8;
     let male_maturation_days_aa = 12.8;
     let male_maturation_days_ab = 10.3;
     let male_maturation_days_bb = 8.7;
     let maturation_cv = 0.5;
-    let environment_time = 10.0;
+
+    let environment_time = 100.0;
     let environment_time_variation = 1.0;
 
     // Initialize random number generation
@@ -353,19 +393,19 @@ fn main() {
         create_first_generation(&number_adults, &proportion_sexes, &proportion_genotypes);
 
     //// Iterate over generations
+    println!("Gen\tStage\tNum\tAA\tAB\tBB");
     for gen in 1..=number_generations {
-        println!("\n= ( Generation: {:5} ) ===========", gen);
 
         // Egg survival to adulthood (except generation 1)
-        println!("-Eggs");
-        println!("  Number of eggs: {}", individual_eggs.len());
+        //println!("\n\n-Eggs");
+        report_genotypes(&individual_eggs, &gen, &"eggs");
 
         if gen != 1 {
             // Egg survival by sex and genotype
             for egg in individual_eggs.iter() {
                 let random_number: f64 = rng.gen();
 
-                if random_number < *egg_survival.get(&egg).unwrap() {
+                if random_number < *egg_survival.get(&egg).unwrap() * survival_global {
                     individual_adults.push(*egg);
                 }
             }
@@ -373,11 +413,11 @@ fn main() {
 
         individual_eggs_previous = individual_eggs.to_vec();
         individual_eggs.clear();
-        println!("  Number of adults after: {}", individual_adults.len());
+        //report_genotypes(&individual_adults, &gen, &"adults");
 
         //// Survival to reproduction
         // Environment duration
-        println!("-Environment");
+        //println!("-Environment");
         let environment_duration_min: f64 = environment_time - environment_time_variation;
         let environment_duration_max: f64 = environment_time + environment_time_variation;
         let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
@@ -421,14 +461,14 @@ fn main() {
                 }
             }
         }
-        println!("  Number of adults: {}", mature_adults.len());
-        println!("  Number of females: {}", mature_females.len());
-        println!("  Number of males: {}", mature_males.len());
+        report_genotypes(&mature_adults, &gen, &"adults");
+        //report_genotypes(&mature_females, &gen, &"females");
+        //report_genotypes(&mature_males, &gen, &"males");
 
         individual_adults.clear();
 
         //// Reproduction
-        println!("-Reproduction");
+        //println!("-Reproduction");
         // Count male genotypes
         let number_mature_males = mature_males.len();
         let mut male_genotype_counts: HashMap<&Genotype, f64> = HashMap::new();
@@ -447,7 +487,8 @@ fn main() {
 
         // Compute frequency dependent selection coefficient
         let mut male_freq_dep: HashMap<&Genotype, f64> = HashMap::new();
-        let proportion_male_aa = male_genotype_proportions.get(&Genotype::AA).unwrap();
+        let proportion_male_aa = male_genotype_proportions.get(&Genotype::AA).unwrap_or(&0.0);
+
         male_freq_dep.insert(&Genotype::AA, 1.0);
         male_freq_dep.insert(
             &Genotype::AB,
@@ -476,8 +517,6 @@ fn main() {
             },
         ];
 
-        // for each female, pick a male randomly (weighted)
-        // for each egg, pick sex (weighted) and genotype (from available males) randomly
         for female in mature_females.iter() {
             // Pick weighted random mate genotype
             // TODO Bug Alert!!! Need to multiply weights by proportions of genotypes (if not done)
@@ -502,27 +541,25 @@ fn main() {
                 // Create egg
                 let genotype = genotype_from_alleles(female_allele, male_allele);
                 let random_number: f64 = rng.gen();
-                let sex = if random_number < 0.5 {
+                let sex = if random_number < proportion_females {
                     Sex::female
                 } else {
                     Sex::male
                 };
+
                 individual_eggs.push(Fly {
                     sex: sex,
                     genotype: genotype,
                 });
             }
         }
-        println!("Number of eggs generated: {}", individual_eggs.len());
+        //report_genotypes(&individual_eggs, &gen, &"eggs");
 
         // Shuffle and keep number_eggs_per_generation eggs
         rng.shuffle(&mut individual_eggs);
         individual_eggs = individual_eggs[..number_eggs_per_generation].to_vec();
-        println!("Number of eggs kept: {}", individual_eggs.len());
+        //report_genotypes(&individual_eggs, &gen, &"eggs");
 
-        //// TODO Report results
-
-        //// TODO end simulation
         // if either AA or BB alleles get fixated, end simulation
         let mut count_AA = 0;
         let mut count_AB = 0;
@@ -535,13 +572,13 @@ fn main() {
             }
         }
 
-        println!("AA: {}, AB: {}, BB: {}", count_AA, count_AB, count_BB);
+        //println!("AA: {}, AB: {}, BB: {}", count_AA, count_AB, count_BB);
 
         let num_individual_eggs = individual_eggs.len();
-        if count_AA == num_individual_eggs || count_BB == num_individual_eggs {
+        if (count_AA == 0 && count_AB ==0) || (count_BB == 0 && count_AB == 0) {
+            println!("Alleles fixated on generation {}!", gen);
             break;
         }
+        println!("")
     }
-
-    println!("");
 }
