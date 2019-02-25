@@ -176,7 +176,7 @@ fn main() {
     //// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
-    let number_generations = 30;
+    let number_generations = 10;
     let proportion_females = 0.5;
     let number_eggs_per_generation = 1000;
     let number_eggs_per_female = 50 as f64;
@@ -288,28 +288,10 @@ fn main() {
     );
 
     // Male reproductive sucess per genotype
-    let mut male_success: HashMap<&Fly, f64> = HashMap::new();
-    male_success.insert(
-        &Fly {
-            sex: Sex::male,
-            genotype: Genotype::AA,
-        },
-        male_success_aa,
-    );
-    male_success.insert(
-        &Fly {
-            sex: Sex::male,
-            genotype: Genotype::AB,
-        },
-        male_success_ab,
-    );
-    male_success.insert(
-        &Fly {
-            sex: Sex::male,
-            genotype: Genotype::BB,
-        },
-        male_success_bb,
-    );
+    let mut male_success: HashMap<&Genotype, f64> = HashMap::new();
+    male_success.insert( &Genotype::AA, male_success_aa,);
+    male_success.insert( &Genotype::AB, male_success_ab,);
+    male_success.insert( &Genotype::BB, male_success_bb,);
 
     // Maturation time
     let mut maturation_time: HashMap<&Fly, f64> = HashMap::new();
@@ -406,7 +388,10 @@ fn main() {
 
         if gen != 1 {
             // Egg survival by sex and genotype
+            individual_adults.clear();
+
             for egg in individual_eggs.iter() {
+                //println!("Survival: {}", *egg_survival.get(&egg).unwrap() * survival_global);
                 let random_number: f64 = rng.gen();
 
                 if random_number < *egg_survival.get(&egg).unwrap() * survival_global {
@@ -457,6 +442,7 @@ fn main() {
                         sex: adult.sex,
                         genotype: adult.genotype,
                     });
+
                 } else {
                     mature_males.push(Fly {
                         sex: adult.sex,
@@ -469,13 +455,14 @@ fn main() {
         //report_genotypes(&mature_females, &gen, &"females");
         //report_genotypes(&mature_males, &gen, &"males");
 
-        individual_adults.clear();
-
         //// Reproduction
         //println!("-Reproduction");
         // Count male genotypes
         let number_mature_males = mature_males.len();
         let mut male_genotype_counts: HashMap<&Genotype, f64> = HashMap::new();
+        male_genotype_counts.insert(&Genotype::AA, 0.0);
+        male_genotype_counts.insert(&Genotype::AB, 0.0);
+        male_genotype_counts.insert(&Genotype::BB, 0.0);
 
         for male in mature_males.iter() {
             *male_genotype_counts.entry(&male.genotype).or_insert(0.0) += 1.0;
@@ -503,28 +490,43 @@ fn main() {
             1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa),
         );
 
+        // Compute male genotype probabilities for mating
+        //TODO Bug: does not behave has python simulation script
+        let mut male_genotype_probabilities: HashMap<&Genotype, f64> = HashMap::new();
+        male_genotype_probabilities.insert(&Genotype::AA,
+                                           male_genotype_proportions.get(&Genotype::AA).unwrap() *
+                                           male_success.get(&Genotype::AA).unwrap() *
+                                           male_genotype_proportions.get(&Genotype::AA).unwrap());
+
+        male_genotype_probabilities.insert(&Genotype::AB,
+                                           male_genotype_proportions.get(&Genotype::AB).unwrap() *
+                                           male_success.get(&Genotype::AB).unwrap() *
+                                           male_genotype_proportions.get(&Genotype::AB).unwrap());
+
+        male_genotype_probabilities.insert(&Genotype::BB,
+                                           male_genotype_proportions.get(&Genotype::BB).unwrap() *
+                                           male_success.get(&Genotype::BB).unwrap() *
+                                           male_genotype_proportions.get(&Genotype::BB).unwrap());
         // Normalize probabilities to 1.0
-        let total_coefficient: f64 = male_freq_dep.values().sum();
+        let total_coefficient: f64 = male_genotype_probabilities.values().sum();
 
         let proportion_genotypes = vec![
             ProportionGenotype {
                 genotype: Genotype::AA,
-                proportion: male_freq_dep.get(&Genotype::AA).unwrap() / total_coefficient,
+                proportion: male_genotype_probabilities.get(&Genotype::AA).unwrap() / total_coefficient,
             },
             ProportionGenotype {
                 genotype: Genotype::AB,
-                proportion: male_freq_dep.get(&Genotype::AB).unwrap() / total_coefficient,
+                proportion: male_genotype_probabilities.get(&Genotype::AB).unwrap() / total_coefficient,
             },
             ProportionGenotype {
                 genotype: Genotype::BB,
-                proportion: male_freq_dep.get(&Genotype::BB).unwrap() / total_coefficient,
+                proportion: male_genotype_probabilities.get(&Genotype::BB).unwrap() / total_coefficient,
             },
         ];
 
         for female in mature_females.iter() {
             // Pick weighted random mate genotype
-            // TODO Bug Alert!!! Need to multiply weights by proportions of genotypes (if not done)
-            // TODO Bug.. and by male_success ??? Or dows male_freq_dep already contains this info?
             let random_male_genotype = proportion_genotypes
                 .choose_weighted(&mut rng, |item| item.proportion)
                 .unwrap()
