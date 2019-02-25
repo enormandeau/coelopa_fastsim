@@ -120,7 +120,6 @@ fn allele_from_parent(p: &Fly) -> char {
 }
 
 fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
-    //TODO debug
     if a1 == 'A' && a2 == 'A' {
         Genotype::AA
     } else if a1 == 'B' && a2 == 'B' {
@@ -133,13 +132,11 @@ fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
 }
 
 fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
-    let mut genotype_counts: [i32; 3] = [0, 0, 0];
-    let mut genotype_proportions: [f64; 3] = [0.0, 0.0, 0.0];
+    let mut genotype_counts = [0, 0, 0];
+    let mut genotype_proportions = [0.0, 0.0, 0.0];
 
     for s in samples.iter() {
-        let genotype = s.genotype;
-
-        match genotype {
+        match s.genotype {
             Genotype::AA => genotype_counts[0] += 1,
             Genotype::AB => genotype_counts[1] += 1,
             Genotype::BB => genotype_counts[2] += 1,
@@ -147,7 +144,9 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
     }
 
     if samples.len() == 0 {
+
         genotype_proportions
+
     } else {
         for i in 0..3 {
             genotype_proportions[i] = genotype_counts[i] as f64 / samples.len() as f64;
@@ -176,10 +175,10 @@ fn main() {
     //// Parameters
     // TODO Parse arguments with `clap`
     let output_file = "output_file.txt";
-    let number_generations = 10;
+    let number_generations = 30;
     let proportion_females = 0.5;
-    let number_eggs_per_generation = 1000;
-    let number_eggs_per_female = 50 as f64;
+    let number_eggs_per_generation = 10000;
+    let number_eggs_per_female = 20 as f64;
 
     let proportion_aa = 0.07;
     let proportion_bb = 0.44;
@@ -207,7 +206,7 @@ fn main() {
     let male_maturation_days_bb = 8.7;
     let maturation_cv = 0.5;
 
-    let environment_time = 100.0;
+    let environment_time = 10.0;
     let environment_time_variation = 1.0;
 
     // Initialize random number generation
@@ -383,7 +382,6 @@ fn main() {
     println!("Gen\tStage\tNum\tAA\tAB\tBB");
     for gen in 1..=number_generations {
         // Egg survival to adulthood (except generation 1)
-        //println!("\n\n-Eggs");
         report_genotypes(&individual_eggs, &gen, &"eggs");
 
         if gen != 1 {
@@ -406,7 +404,6 @@ fn main() {
 
         //// Survival to reproduction
         // Environment duration
-        //println!("-Environment");
         let environment_duration_min: f64 = environment_time - environment_time_variation;
         let environment_duration_max: f64 = environment_time + environment_time_variation;
         let environment_range = Uniform::from(environment_duration_min..environment_duration_max);
@@ -456,7 +453,6 @@ fn main() {
         //report_genotypes(&mature_males, &gen, &"males");
 
         //// Reproduction
-        //println!("-Reproduction");
         // Count male genotypes
         let number_mature_males = mature_males.len();
         let mut male_genotype_counts: HashMap<&Genotype, f64> = HashMap::new();
