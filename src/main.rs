@@ -99,7 +99,7 @@ fn create_first_generation(
     pgenotypes: &Vec<ProportionGenotype>,
 ) -> Vec<Fly> {
     let mut rng = rand::thread_rng();
-    let mut v = Vec::new();
+    let mut samples = Vec::new();
 
     // Create adults with random sex and genotype using proportions
     for _ in 0..*n {
@@ -107,26 +107,29 @@ fn create_first_generation(
             .choose_weighted(&mut rng, |item| item.proportion)
             .unwrap()
             .sex;
+
         let genotype = pgenotypes
             .choose_weighted(&mut rng, |item| item.proportion)
             .unwrap()
             .genotype;
 
-        v.push(Fly {
+        samples.push(Fly {
             sex: sex,
             genotype: genotype,
         });
     }
 
-    v
+    samples
 }
 
 fn allele_from_parent(p: &Fly) -> char {
+    // Return a random allele from a parent
     match p.genotype {
         Genotype::AA => 'A',
         Genotype::AB => {
             let mut rng = rand::thread_rng();
             let random_number: f64 = rng.gen();
+
             if random_number < 0.5 {
                 'A'
             } else {
@@ -138,6 +141,7 @@ fn allele_from_parent(p: &Fly) -> char {
 }
 
 fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
+    // Create a Genotype from two alleles passed as chars
     if a1 == 'A' && a2 == 'A' {
         Genotype::AA
     } else if a1 == 'B' && a2 == 'B' {
@@ -150,6 +154,8 @@ fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
 }
 
 fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
+    // Return array of 3 values containing the proportion of
+    // AA, AB, and BB genotypes
     let mut genotype_counts = [0, 0, 0];
     let mut genotype_proportions = [0.0, 0.0, 0.0];
 
@@ -173,6 +179,7 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
 }
 
 fn report_genotypes(
+    // Print genotype proportions on screen and write them to file
     samples: &Vec<Fly>,
     generation: &i32,
     lifestage: &Lifestage,
@@ -190,6 +197,7 @@ fn report_genotypes(
     );
 
     // Report to file
+    // Eggs come first on each line (no \n) and then adults
     match lifestage {
         Lifestage::egg => outfile.write(
             format!(
@@ -199,8 +207,7 @@ fn report_genotypes(
             .as_bytes(),
         ),
 
-        Lifestage::adult => outfile
-            .write(format!("{}\t{}\t{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
+        Lifestage::adult => outfile.write(format!("{}\t{}\t{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
     };
 }
 
@@ -244,12 +251,12 @@ fn main() {
     let environment_time = 10.0;
     let environment_time_variation = 1.0;
 
-    // Initialize random number generation
-    let mut rng = rand::thread_rng();
-
     // Compute derived parameters
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
     let proportion_males = 1.0 - proportion_females;
+
+    // Initialize random number generation
+    let mut rng = rand::thread_rng();
 
     //// Survival and reproduction parameters
     // Survival from egg to adult
@@ -413,16 +420,16 @@ fn main() {
     let mut individual_adults =
         create_first_generation(&number_adults, &proportion_sexes, &proportion_genotypes);
 
-    // Create output file and header
+    // Create output file and write header
     let mut outfile = File::create(output_file).expect("Cannot creat file");
     outfile.write(b"Generation\teggAA\teggAB\teggBB\tadultAA\tadultAB\tadultBB\n");
 
     //// Iterate over generations
     println!("Gen\tStage\tNum\tAA\tAB\tBB\n");
-    for gen in 1..=number_generations {
-        // Egg survival to adulthood (except generation 1)
-        report_genotypes(&individual_eggs, &gen, &Lifestage::egg, &mut outfile);
 
+    for gen in 1..=number_generations {
+
+        // Egg survival to adulthood (except generation 1)
         if gen != 1 {
             // Egg survival by sex and genotype
             individual_adults.clear();
@@ -436,6 +443,8 @@ fn main() {
             }
         }
 
+        // Report egg genotypes and cleanup
+        report_genotypes(&individual_eggs, &gen, &Lifestage::egg, &mut outfile);
         individual_eggs_previous = individual_eggs.to_vec();
         individual_eggs.clear();
 
@@ -484,6 +493,8 @@ fn main() {
                 }
             }
         }
+
+        // Report adult genotypes
         report_genotypes(&mature_adults, &gen, &Lifestage::adult, &mut outfile);
 
         //// Reproduction
@@ -520,7 +531,9 @@ fn main() {
             1.0 - male_freq_dep_coef * (1.0 - proportion_male_aa),
         );
 
-        // Compute male genotype probabilities for mating
+        // Compute male genotype probabilities for mating as function of
+        // genotype proportions, reproduction success of each genotype, and
+        // frequency dependent selection
         let mut male_genotype_probabilities: HashMap<&Genotype, f64> = HashMap::new();
         male_genotype_probabilities.insert(
             &Genotype::AA,
@@ -542,6 +555,7 @@ fn main() {
                 * male_success.get(&Genotype::BB).unwrap()
                 * male_freq_dep.get(&Genotype::BB).unwrap(),
         );
+
         // Normalize probabilities to 1.0
         let total_coefficient: f64 = male_genotype_probabilities.values().sum();
 
@@ -563,28 +577,33 @@ fn main() {
             },
         ];
 
+        // Each female reproduces with one male
         for female in mature_females.iter() {
+
             // Pick weighted random mate genotype
             let random_male_genotype = proportion_genotypes
                 .choose_weighted(&mut rng, |item| item.proportion)
                 .unwrap()
                 .genotype;
 
+            // Determine number of eggs to lay
             let num_eggs = *female_eggs.get(female).unwrap() as u32;
 
             for egg in 1..=num_eggs {
-                // Get female allele
+
+                // Get one female allele
                 let female_allele = allele_from_parent(&female);
 
-                // Get male allele
+                // Get one male allele
                 let male_allele = allele_from_parent(&Fly {
                     sex: Sex::male,
                     genotype: random_male_genotype,
                 });
 
-                // Create egg
+                // Create egg from parent genotypes
                 let genotype = genotype_from_alleles(female_allele, male_allele);
                 let random_number: f64 = rng.gen();
+
                 let sex = if random_number < proportion_females {
                     Sex::female
                 } else {
@@ -609,10 +628,13 @@ fn main() {
 
         individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
 
-        // if either AA or BB alleles get fixated, end simulation
+        // Count genotypes
+        let num_individual_eggs = individual_eggs.len();
+
         let mut count_AA = 0;
         let mut count_AB = 0;
         let mut count_BB = 0;
+
         for egg in individual_eggs.iter() {
             match egg.genotype {
                 Genotype::AA => count_AA += 1,
@@ -621,13 +643,10 @@ fn main() {
             }
         }
 
-        //println!("AA: {}, AB: {}, BB: {}", count_AA, count_AB, count_BB);
-
-        let num_individual_eggs = individual_eggs.len();
+        // End simulation if either AA or BB alleles get fixated
         if (count_AA == 0 && count_AB == 0) || (count_BB == 0 && count_AB == 0) {
             println!("Alleles fixated on generation {}!", gen);
             break;
         }
-        println!("")
     }
 }
