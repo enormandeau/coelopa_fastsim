@@ -10,8 +10,8 @@ use rand::Rng;
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufWriter, Write};
 use std::io::prelude::*;
+use std::io::{BufWriter, Write};
 use std::vec::Vec;
 //use std::io;
 //use std::env;
@@ -172,7 +172,12 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
     }
 }
 
-fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &Lifestage, outfile: &mut File) {
+fn report_genotypes(
+    samples: &Vec<Fly>,
+    generation: &i32,
+    lifestage: &Lifestage,
+    outfile: &mut File,
+) {
     let genotypes = get_genotype_proportions(&samples);
     println!(
         "{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
@@ -186,20 +191,16 @@ fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &Lifestage,
 
     // Report to file
     match lifestage {
-
         Lifestage::egg => outfile.write(
             format!(
                 "{}\t{}\t{}\t{}\t",
-                generation, genotypes[0], genotypes[1], genotypes[2])
-            .as_bytes()
-            ),
+                generation, genotypes[0], genotypes[1], genotypes[2]
+            )
+            .as_bytes(),
+        ),
 
-        Lifestage::adult => outfile.write(
-            format!(
-                "{}\t{}\t{}\n",
-                genotypes[0], genotypes[1], genotypes[2])
-            .as_bytes()
-            ),
+        Lifestage::adult => outfile
+            .write(format!("{}\t{}\t{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
     };
 }
 
@@ -209,10 +210,10 @@ fn main() {
     // TODO Parse arguments with `clap`
     let output_file = "output_file.tsv";
 
-    let number_generations = 100;
+    let number_generations = 5;
     let proportion_females = 0.5;
     let number_eggs_per_generation = 1000;
-    let number_eggs_per_female = 20 as f64;
+    let number_eggs_per_female = 50 as f64;
 
     let proportion_aa = 0.07;
     let proportion_bb = 0.44;
