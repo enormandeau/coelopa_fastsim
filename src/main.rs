@@ -1,7 +1,7 @@
 #![allow(warnings)]
 //// Modules
-//extern crate clap;
-//use clap::{Arg, App, SubCommand};
+extern crate clap;
+use clap::{Arg, App};
 
 extern crate rand;
 use rand::distributions::Uniform;
@@ -181,7 +181,7 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
 fn report_genotypes(
     // Print genotype proportions on screen and write them to file
     samples: &Vec<Fly>,
-    generation: &i32,
+    generation: &u32,
     lifestage: &Lifestage,
     outfile: &mut File,
 ) {
@@ -217,7 +217,7 @@ fn main() {
     // TODO Parse arguments with `clap`
     let output_file = "output_file.tsv";
 
-    let number_generations = 5;
+    //let number_generations = 5;
     let proportion_females = 0.5;
     let number_eggs_per_generation = 1000;
     let number_eggs_per_female = 50 as f64;
@@ -250,6 +250,40 @@ fn main() {
 
     let environment_time = 10.0;
     let environment_time_variation = 1.0;
+
+    // Get parameters with Clap
+    let matches = App::new("Coelopa FastSim")
+                        .version("0.1")
+                        .author("Eric Normandeau")
+                        .about("Rust re-implementation of coelopa inversion evolution simulator")
+
+                        .arg(Arg::with_name("number_generations")
+                                    .short("g")
+                                    .long("number_generations")
+                                    .value_name("INT [>= 0]")
+                                    .help("Duration of simulation in number of generations")
+                                    .takes_value(true))
+
+                        .arg(Arg::with_name("slop")
+                             .multiple(true)
+                             .last(true))
+
+                        .get_matches();
+
+    // Convert parameters to wanted types
+    let number_generations = matches.value_of("number_generations")
+        .unwrap_or("5").parse::<u32>().unwrap();
+
+
+
+
+
+
+
+
+
+
+
 
     // Compute derived parameters
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
