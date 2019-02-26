@@ -9,6 +9,8 @@ use rand::prelude::*;
 use rand::Rng;
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::io::prelude::*;
 use std::vec::Vec;
 //use std::io;
@@ -49,7 +51,23 @@ impl std::fmt::Display for Genotype {
     }
 }
 
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
+enum Lifestage {
+    egg,
+    adult,
+}
+
 //// Structs
+impl std::fmt::Display for Lifestage {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let printable = match *self {
+            Lifestage::egg => "egg",
+            Lifestage::adult => "adult",
+        };
+        write!(f, "{}", printable)
+    }
+}
+
 #[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
 struct Fly {
     sex: Sex,
@@ -154,8 +172,7 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
     }
 }
 
-fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &str) {
-    // TODO Report results to file
+fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &Lifestage, outfile: &mut File) {
     let genotypes = get_genotype_proportions(&samples);
     println!(
         "{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
@@ -166,14 +183,33 @@ fn report_genotypes(samples: &Vec<Fly>, generation: &i32, lifestage: &str) {
         genotypes[1],
         genotypes[2]
     );
+
+    // Report to file
+    match lifestage {
+
+        Lifestage::egg => outfile.write(
+            format!(
+                "{}\t{}\t{}\t{}\t",
+                generation, genotypes[0], genotypes[1], genotypes[2])
+            .as_bytes()
+            ),
+
+        Lifestage::adult => outfile.write(
+            format!(
+                "{}\t{}\t{}\n",
+                genotypes[0], genotypes[1], genotypes[2])
+            .as_bytes()
+            ),
+    };
 }
 
 //// Main
 fn main() {
     //// Parameters
     // TODO Parse arguments with `clap`
-    let output_file = "output_file.txt";
-    let number_generations = 5;
+    let output_file = "output_file.tsv";
+
+    let number_generations = 100;
     let proportion_females = 0.5;
     let number_eggs_per_generation = 1000;
     let number_eggs_per_female = 20 as f64;
@@ -376,11 +412,15 @@ fn main() {
     let mut individual_adults =
         create_first_generation(&number_adults, &proportion_sexes, &proportion_genotypes);
 
+    // Create output file and header
+    let mut outfile = File::create(output_file).expect("Cannot creat file");
+    outfile.write(b"Generation\teggAA\teggAB\teggBB\tadultAA\tadultAB\tadultBB\n");
+
     //// Iterate over generations
     println!("Gen\tStage\tNum\tAA\tAB\tBB\n");
     for gen in 1..=number_generations {
         // Egg survival to adulthood (except generation 1)
-        report_genotypes(&individual_eggs, &gen, &"eggs");
+        report_genotypes(&individual_eggs, &gen, &Lifestage::egg, &mut outfile);
 
         if gen != 1 {
             // Egg survival by sex and genotype
@@ -397,7 +437,6 @@ fn main() {
 
         individual_eggs_previous = individual_eggs.to_vec();
         individual_eggs.clear();
-        //report_genotypes(&individual_adults, &gen, &"adults");
 
         //// Survival to reproduction
         // Environment duration
@@ -444,9 +483,7 @@ fn main() {
                 }
             }
         }
-        report_genotypes(&mature_adults, &gen, &"adults");
-        //report_genotypes(&mature_females, &gen, &"females");
-        //report_genotypes(&mature_males, &gen, &"males");
+        report_genotypes(&mature_adults, &gen, &Lifestage::adult, &mut outfile);
 
         //// Reproduction
         // Count male genotypes
@@ -559,7 +596,6 @@ fn main() {
                 });
             }
         }
-        //report_genotypes(&individual_eggs, &gen, &"eggs");
 
         // Shuffle and keep number_eggs_per_generation eggs
         rng.shuffle(&mut individual_eggs);
@@ -571,7 +607,6 @@ fn main() {
         }
 
         individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
-        //report_genotypes(&individual_eggs, &gen, &"eggs");
 
         // if either AA or BB alleles get fixated, end simulation
         let mut count_AA = 0;
