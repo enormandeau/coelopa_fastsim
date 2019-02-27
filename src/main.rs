@@ -201,13 +201,13 @@ fn report_genotypes(
     match lifestage {
         Lifestage::egg => outfile.write(
             format!(
-                "{}\t{}\t{}\t{}\t",
+                "{},{},{},{},",
                 generation, genotypes[0], genotypes[1], genotypes[2]
             )
             .as_bytes(),
         ),
 
-        Lifestage::adult => outfile.write(format!("{}\t{}\t{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
+        Lifestage::adult => outfile.write(format!("{},{},{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
     };
 }
 
@@ -675,7 +675,7 @@ fn main() {
 
     // Create output file and write header
     let mut outfile = File::create(output_file).expect("Cannot creat file");
-    outfile.write(b"Generation\teggAA\teggAB\teggBB\tadultAA\tadultAB\tadultBB\n");
+    outfile.write(b"Generation,eggAA,eggAB,eggBB,adultAA,adultAB,adultBB\n");
 
     //// Iterate over generations
     println!("#Gen\tStage\tNum\tAA\tAB\tBB");
@@ -881,25 +881,25 @@ fn main() {
 
         individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
 
-        // Count genotypes
-        let num_individual_eggs = individual_eggs.len();
+        //// Count genotypes to decide if we end the simulation
+        //let num_individual_eggs = individual_eggs.len();
 
-        let mut count_AA = 0;
-        let mut count_AB = 0;
-        let mut count_BB = 0;
+        //let mut count_AA = 0;
+        //let mut count_AB = 0;
+        //let mut count_BB = 0;
 
-        for egg in individual_eggs.iter() {
-            match egg.genotype {
-                Genotype::AA => count_AA += 1,
-                Genotype::AB => count_AB += 1,
-                Genotype::BB => count_BB += 1,
-            }
-        }
+        //for egg in individual_eggs.iter() {
+        //    match egg.genotype {
+        //        Genotype::AA => count_AA += 1,
+        //        Genotype::AB => count_AB += 1,
+        //        Genotype::BB => count_BB += 1,
+        //    }
+        //}
 
-        // End simulation if either AA or BB alleles get fixated
-        if (count_AA == 0 && count_AB == 0) || (count_BB == 0 && count_AB == 0) {
-            println!("Alleles fixated on generation {}!", gen);
-            break;
-        }
+        //// End simulation if either AA or BB alleles get fixated
+        //if (count_AA == 0 && count_AB == 0) || (count_BB == 0 && count_AB == 0) {
+        //    println!("Alleles fixated on generation {}!", gen);
+        //    break;
+        //}
     }
 }
