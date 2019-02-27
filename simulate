@@ -27,7 +27,7 @@ grep -v "#" "$PARAMETER_FILE" |
 
         # For each parameter set, run $NUMBER_REPLICATES simulations
         seq -w "$NUMBER_REPLICATES" |
-            parallel -j 10 ./target/release/coelopa_fastsim \
+            parallel -j 20 ./target/release/coelopa_fastsim \
                 -o "$OUTPUT_FOLDER"/"${array[0]}"/"${array[1]}"_replicate_{}.csv \
                     --number-generations          "${array[3]}"   \
                     --number-eggs-per-generation  "${array[4]}"   \
