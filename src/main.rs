@@ -225,7 +225,7 @@ fn main() {
         // dashes for compatibility with Python arguments and
         // so the automatic simulation script can launch both
         // Can't remember what this "slop" option does...
-        .arg(Arg::with_name("slop").multiple(true).last(true))
+        //.arg(Arg::with_name("slop").multiple(true).last(true))
         .arg(
             Arg::with_name("output_file")
                 .long("output-file")
@@ -487,7 +487,7 @@ fn main() {
 
     let survival_females_bb = matches
         .value_of("survival_females_bb")
-        .unwrap_or("1.00")
+        .unwrap_or("1.0")
         .parse::<f64>()
         .unwrap();
 
