@@ -1,12 +1,12 @@
 //#![allow(warnings)]
 //// Modules
 extern crate clap;
-use clap::{Arg, App};
+use clap::{App, Arg};
 
 extern crate rand;
 use rand::distributions::Uniform;
-use rand::seq::SliceRandom;
 use rand::prelude::*;
+use rand::seq::SliceRandom;
 use rand::Rng;
 
 use std::collections::HashMap;
@@ -205,8 +205,10 @@ fn report_genotypes(
             .as_bytes(),
         ),
 
-        Lifestage::Adult => outfile.write(format!("{},{},{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
-    }.unwrap();
+        Lifestage::Adult => outfile
+            .write(format!("{},{},{}\n", genotypes[0], genotypes[1], genotypes[2]).as_bytes()),
+    }
+    .unwrap();
 }
 
 //// Main
@@ -216,274 +218,380 @@ fn main() {
 
     // Get parameters with Clap
     let matches = App::new("Coelopa FastSim")
-                        .version("v0.1")
-                        .author("Eric Normandeau")
-                        .about("Coelopa Genomic Inversion Simulator")
-
-                        // Parameter names have underscores but 'long' have
-                        // dashes for compatibility with Python arguments and
-                        // so the automatic simulation script can launch both
-
-                        // Can't remember what this "slop" option does...
-                        .arg(Arg::with_name("slop")
-                             .multiple(true)
-                             .last(true))
-
-                        .arg(Arg::with_name("output_file")
-                                    .long("output-file")
-                                    .short("o")
-                                    .value_name("STRING")
-                                    .help("Name of output file")
-                                    .takes_value(true)
-                                    .required(true))
-
-                        .arg(Arg::with_name("number_generations")
-                                    .long("number-generations")
-                                    .value_name("INT")
-                                    .help("Duration of simulation in number of generations [>= 0] (default=5)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("proportion_females")
-                                    .long("proportion-females")
-                                    .value_name("FLOAT")
-                                    .help("Proportion of females in eggs [0, 1] (default=0.5)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("number_eggs_per_generation")
-                                    .long("number-eggs-per-generation")
-                                    .value_name("INT")
-                                    .help("Number of eggs to keep per generation [>= 0] (default=1000)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("number_eggs_per_female")
-                                    .long("number-eggs-per-female")
-                                    .value_name("INT")
-                                    .help("Number of eggs per female per generation [>= 0] (default=50)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("proportion_aa")
-                                    .long("proportion-aa")
-                                    .value_name("FLOAT")
-                                    .help("Starting proportion of AA individuals [0, 1] (default=0.07)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("proportion_bb")
-                                    .long("proportion-bb")
-                                    .value_name("FLOAT")
-                                    .help("Starting proportion of BB individuals [0, 1] (default=0.44)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_global")
-                                    .long("survival-global")
-                                    .value_name("FLOAT")
-                                    .help("Basic proportion of surviving individuals [0, 1] (default=0.3)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_females_aa")
-                                    .long("survival-females-aa")
-                                    .value_name("FLOAT")
-                                    .help("Relative survival rate of AA female eggs [0, 1] (default=0.71)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_females_ab")
-                                    .long("survival-females-ab")
-                                    .value_name("FLOAT")
-                                    .help("Relative survival rate of AB female eggs [0, 1] (default=0.9)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_females_bb")
-                                    .long("survival-females-bb")
-                                    .value_name("FLOAT")
-                                    .help("Relative survival rate of BB female eggs [0, 1] (default=1.0)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_males_aa")
-                                    .long("survival-males-aa")
-                                    .value_name("FLOAT")
-                                    .help("Relative survival rate of AA male eggs [0, 1] (default=0.81)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_males_ab")
-                                    .long("survival-males-ab")
-                                    .value_name("FLOAT")
-                                    .help("Relative survival rate of AB male eggs [0, 1] (default=1.0)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("survival_males_bb")
-                                    .long("survival-males-bb")
-                                    .value_name("FLOAT")
-                                    .help("Relative survival rate of BB male eggs [0, 1] (default=0.88)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("female_eggs_aa")
-                                    .long("female-eggs-aa")
-                                    .value_name("FLOAT")
-                                    .help("Relative number of eggs for AA females [0, 1] (default=1.0)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("female_eggs_ab")
-                                    .long("female-eggs-ab")
-                                    .value_name("FLOAT")
-                                    .help("Relative number of eggs for AA females [0, 1] (default=0.97)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("female_eggs_bb")
-                                    .long("female-eggs-bb")
-                                    .value_name("FLOAT")
-                                    .help("Relative number of eggs for AA females [0, 1] (default=0.87)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_success_aa")
-                                    .long("male-success-aa")
-                                    .value_name("FLOAT")
-                                    .help("Relative reproductive success for AA males [0, 1] (default=1.0)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_success_ab")
-                                    .long("male-success-ab")
-                                    .value_name("FLOAT")
-                                    .help("Relative reproductive success for AB males [0, 1] (default=0.55)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_success_bb")
-                                    .long("male-success-bb")
-                                    .value_name("FLOAT")
-                                    .help("Relative reproductive success for BB males [0, 1] (default=0.1)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_freq_dep_coef")
-                                    .long("male-freq-dep-coef")
-                                    .value_name("FLOAT")
-                                    .help("Intensity of frequency dependence on males [0, 1] (default=0.1)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("female_maturation_days")
-                                    .long("female-maturation-days")
-                                    .value_name("FLOAT")
-                                    .help("Number of days before females are mature [0, 1] (default=8.8)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_maturation_days_aa")
-                                    .long("male-maturation-days-aa")
-                                    .value_name("FLOAT")
-                                    .help("Number of days before AA males are mature [0, 1] (default=12.8)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_maturation_days_ab")
-                                    .long("male-maturation-days-ab")
-                                    .value_name("FLOAT")
-                                    .help("Number of days before AB males are mature [0, 1] (default=10.3)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("male_maturation_days_bb")
-                                    .long("male-maturation-days-bb")
-                                    .value_name("FLOAT")
-                                    .help("Number of days before BB males are mature [0, 1] (default=8.7)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("maturation_cv")
-                                    .long("maturation-cv")
-                                    .value_name("FLOAT")
-                                    .help("Variation coefficient for maturation time [0, 1] (default=0.5)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("environment_time")
-                                    .long("environment-time")
-                                    .value_name("FLOAT")
-                                    .help("Duration of breeding environment in days [0, 1] (default=10.0)")
-                                    .takes_value(true))
-
-                        .arg(Arg::with_name("environment_time_variation")
-                                    .long("environment-time-variation")
-                                    .value_name("FLOAT")
-                                    .help("Deviation on breeding environment duration [0, 1] (default=1.0)")
-                                    .takes_value(true))
-
-                        .get_matches();
+        .version("v0.1")
+        .author("Eric Normandeau")
+        .about("Coelopa Genomic Inversion Simulator")
+        // Parameter names have underscores but 'long' have
+        // dashes for compatibility with Python arguments and
+        // so the automatic simulation script can launch both
+        // Can't remember what this "slop" option does...
+        .arg(Arg::with_name("slop").multiple(true).last(true))
+        .arg(
+            Arg::with_name("output_file")
+                .long("output-file")
+                .short("o")
+                .value_name("STRING")
+                .help("Name of output file")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("number_generations")
+                .long("number-generations")
+                .value_name("INT")
+                .help("Duration of simulation in number of generations [>= 0] (default=5)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("proportion_females")
+                .long("proportion-females")
+                .value_name("FLOAT")
+                .help("Proportion of females in eggs [0, 1] (default=0.5)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("number_eggs_per_generation")
+                .long("number-eggs-per-generation")
+                .value_name("INT")
+                .help("Number of eggs to keep per generation [>= 0] (default=1000)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("number_eggs_per_female")
+                .long("number-eggs-per-female")
+                .value_name("INT")
+                .help("Number of eggs per female per generation [>= 0] (default=50)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("proportion_aa")
+                .long("proportion-aa")
+                .value_name("FLOAT")
+                .help("Starting proportion of AA individuals [0, 1] (default=0.07)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("proportion_bb")
+                .long("proportion-bb")
+                .value_name("FLOAT")
+                .help("Starting proportion of BB individuals [0, 1] (default=0.44)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_global")
+                .long("survival-global")
+                .value_name("FLOAT")
+                .help("Basic proportion of surviving individuals [0, 1] (default=0.3)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_females_aa")
+                .long("survival-females-aa")
+                .value_name("FLOAT")
+                .help("Relative survival rate of AA female eggs [0, 1] (default=0.71)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_females_ab")
+                .long("survival-females-ab")
+                .value_name("FLOAT")
+                .help("Relative survival rate of AB female eggs [0, 1] (default=0.9)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_females_bb")
+                .long("survival-females-bb")
+                .value_name("FLOAT")
+                .help("Relative survival rate of BB female eggs [0, 1] (default=1.0)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_males_aa")
+                .long("survival-males-aa")
+                .value_name("FLOAT")
+                .help("Relative survival rate of AA male eggs [0, 1] (default=0.81)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_males_ab")
+                .long("survival-males-ab")
+                .value_name("FLOAT")
+                .help("Relative survival rate of AB male eggs [0, 1] (default=1.0)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("survival_males_bb")
+                .long("survival-males-bb")
+                .value_name("FLOAT")
+                .help("Relative survival rate of BB male eggs [0, 1] (default=0.88)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("female_eggs_aa")
+                .long("female-eggs-aa")
+                .value_name("FLOAT")
+                .help("Relative number of eggs for AA females [0, 1] (default=1.0)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("female_eggs_ab")
+                .long("female-eggs-ab")
+                .value_name("FLOAT")
+                .help("Relative number of eggs for AA females [0, 1] (default=0.97)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("female_eggs_bb")
+                .long("female-eggs-bb")
+                .value_name("FLOAT")
+                .help("Relative number of eggs for AA females [0, 1] (default=0.87)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_success_aa")
+                .long("male-success-aa")
+                .value_name("FLOAT")
+                .help("Relative reproductive success for AA males [0, 1] (default=1.0)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_success_ab")
+                .long("male-success-ab")
+                .value_name("FLOAT")
+                .help("Relative reproductive success for AB males [0, 1] (default=0.55)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_success_bb")
+                .long("male-success-bb")
+                .value_name("FLOAT")
+                .help("Relative reproductive success for BB males [0, 1] (default=0.1)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_freq_dep_coef")
+                .long("male-freq-dep-coef")
+                .value_name("FLOAT")
+                .help("Intensity of frequency dependence on males [0, 1] (default=0.1)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("female_maturation_days")
+                .long("female-maturation-days")
+                .value_name("FLOAT")
+                .help("Number of days before females are mature [0, 1] (default=8.8)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_maturation_days_aa")
+                .long("male-maturation-days-aa")
+                .value_name("FLOAT")
+                .help("Number of days before AA males are mature [0, 1] (default=12.8)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_maturation_days_ab")
+                .long("male-maturation-days-ab")
+                .value_name("FLOAT")
+                .help("Number of days before AB males are mature [0, 1] (default=10.3)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("male_maturation_days_bb")
+                .long("male-maturation-days-bb")
+                .value_name("FLOAT")
+                .help("Number of days before BB males are mature [0, 1] (default=8.7)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("maturation_cv")
+                .long("maturation-cv")
+                .value_name("FLOAT")
+                .help("Variation coefficient for maturation time [0, 1] (default=0.5)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("environment_time")
+                .long("environment-time")
+                .value_name("FLOAT")
+                .help("Duration of breeding environment in days [0, 1] (default=10.0)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("environment_time_variation")
+                .long("environment-time-variation")
+                .value_name("FLOAT")
+                .help("Deviation on breeding environment duration [0, 1] (default=1.0)")
+                .takes_value(true),
+        )
+        .get_matches();
 
     // Convert parameters to wanted types
-    let output_file = matches.value_of("output_file").expect("Cannot create output file");
+    let output_file = matches
+        .value_of("output_file")
+        .expect("Cannot create output file");
 
-    let number_generations = matches.value_of("number_generations")
-        .unwrap_or("5").parse::<u32>().unwrap();
+    let number_generations = matches
+        .value_of("number_generations")
+        .unwrap_or("5")
+        .parse::<u32>()
+        .unwrap();
 
-    let proportion_females = matches.value_of("proportion_females")
-        .unwrap_or("0.5").parse::<f64>().unwrap();
+    let proportion_females = matches
+        .value_of("proportion_females")
+        .unwrap_or("0.5")
+        .parse::<f64>()
+        .unwrap();
 
-    let number_eggs_per_generation = matches.value_of("number_eggs_per_generation")
-        .unwrap_or("1000").parse::<usize>().unwrap();
+    let number_eggs_per_generation = matches
+        .value_of("number_eggs_per_generation")
+        .unwrap_or("1000")
+        .parse::<usize>()
+        .unwrap();
 
-    let number_eggs_per_female = matches.value_of("number_eggs_per_female")
-        .unwrap_or("50").parse::<f64>().unwrap();
+    let number_eggs_per_female = matches
+        .value_of("number_eggs_per_female")
+        .unwrap_or("50")
+        .parse::<f64>()
+        .unwrap();
 
-    let proportion_aa = matches.value_of("proportion_aa")
-        .unwrap_or("0.07").parse::<f64>().unwrap();
+    let proportion_aa = matches
+        .value_of("proportion_aa")
+        .unwrap_or("0.07")
+        .parse::<f64>()
+        .unwrap();
 
-    let proportion_bb = matches.value_of("proportion_bb")
-        .unwrap_or("0.44").parse::<f64>().unwrap();
+    let proportion_bb = matches
+        .value_of("proportion_bb")
+        .unwrap_or("0.44")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_global = matches.value_of("survival_global")
-        .unwrap_or("0.3").parse::<f64>().unwrap();
+    let survival_global = matches
+        .value_of("survival_global")
+        .unwrap_or("0.3")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_females_aa = matches.value_of("survival_females_aa")
-        .unwrap_or("0.71").parse::<f64>().unwrap();
+    let survival_females_aa = matches
+        .value_of("survival_females_aa")
+        .unwrap_or("0.71")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_females_ab = matches.value_of("survival_females_ab")
-        .unwrap_or("0.9").parse::<f64>().unwrap();
+    let survival_females_ab = matches
+        .value_of("survival_females_ab")
+        .unwrap_or("0.9")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_females_bb = matches.value_of("survival_females_bb")
-        .unwrap_or("1.00").parse::<f64>().unwrap();
+    let survival_females_bb = matches
+        .value_of("survival_females_bb")
+        .unwrap_or("1.00")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_males_aa = matches.value_of("survival_males_aa")
-        .unwrap_or("0.81").parse::<f64>().unwrap();
+    let survival_males_aa = matches
+        .value_of("survival_males_aa")
+        .unwrap_or("0.81")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_males_ab = matches.value_of("survival_males_ab")
-        .unwrap_or("1.0").parse::<f64>().unwrap();
+    let survival_males_ab = matches
+        .value_of("survival_males_ab")
+        .unwrap_or("1.0")
+        .parse::<f64>()
+        .unwrap();
 
-    let survival_males_bb = matches.value_of("survival_males_bb")
-        .unwrap_or("0.88").parse::<f64>().unwrap();
+    let survival_males_bb = matches
+        .value_of("survival_males_bb")
+        .unwrap_or("0.88")
+        .parse::<f64>()
+        .unwrap();
 
-    let female_eggs_aa = matches.value_of("female_eggs_aa")
-        .unwrap_or("1.0").parse::<f64>().unwrap();
+    let female_eggs_aa = matches
+        .value_of("female_eggs_aa")
+        .unwrap_or("1.0")
+        .parse::<f64>()
+        .unwrap();
 
-    let female_eggs_ab = matches.value_of("female_eggs_ab")
-        .unwrap_or("0.97").parse::<f64>().unwrap();
+    let female_eggs_ab = matches
+        .value_of("female_eggs_ab")
+        .unwrap_or("0.97")
+        .parse::<f64>()
+        .unwrap();
 
-    let female_eggs_bb = matches.value_of("female_eggs_bb")
-        .unwrap_or("0.87").parse::<f64>().unwrap();
+    let female_eggs_bb = matches
+        .value_of("female_eggs_bb")
+        .unwrap_or("0.87")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_success_aa = matches.value_of("male_success_aa")
-        .unwrap_or("1.0").parse::<f64>().unwrap();
+    let male_success_aa = matches
+        .value_of("male_success_aa")
+        .unwrap_or("1.0")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_success_ab = matches.value_of("male_success_ab")
-        .unwrap_or("0.55").parse::<f64>().unwrap();
+    let male_success_ab = matches
+        .value_of("male_success_ab")
+        .unwrap_or("0.55")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_success_bb = matches.value_of("male_success_bb")
-        .unwrap_or("0.1").parse::<f64>().unwrap();
+    let male_success_bb = matches
+        .value_of("male_success_bb")
+        .unwrap_or("0.1")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_freq_dep_coef = matches.value_of("male_freq_dep_coef")
-        .unwrap_or("0.1").parse::<f64>().unwrap();
+    let male_freq_dep_coef = matches
+        .value_of("male_freq_dep_coef")
+        .unwrap_or("0.1")
+        .parse::<f64>()
+        .unwrap();
 
-    let female_maturation_days = matches.value_of("female_maturation_days")
-        .unwrap_or("8.8").parse::<f64>().unwrap();
+    let female_maturation_days = matches
+        .value_of("female_maturation_days")
+        .unwrap_or("8.8")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_maturation_days_aa = matches.value_of("male_maturation_days_aa")
-        .unwrap_or("12.8").parse::<f64>().unwrap();
+    let male_maturation_days_aa = matches
+        .value_of("male_maturation_days_aa")
+        .unwrap_or("12.8")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_maturation_days_ab = matches.value_of("male_maturation_days_ab")
-        .unwrap_or("10.3").parse::<f64>().unwrap();
+    let male_maturation_days_ab = matches
+        .value_of("male_maturation_days_ab")
+        .unwrap_or("10.3")
+        .parse::<f64>()
+        .unwrap();
 
-    let male_maturation_days_bb = matches.value_of("male_maturation_days_bb")
-        .unwrap_or("8.7").parse::<f64>().unwrap();
+    let male_maturation_days_bb = matches
+        .value_of("male_maturation_days_bb")
+        .unwrap_or("8.7")
+        .parse::<f64>()
+        .unwrap();
 
-    let maturation_cv = matches.value_of("maturation_cv")
-        .unwrap_or("0.5").parse::<f64>().unwrap();
+    let maturation_cv = matches
+        .value_of("maturation_cv")
+        .unwrap_or("0.5")
+        .parse::<f64>()
+        .unwrap();
 
-    let environment_time = matches.value_of("environment_time")
-        .unwrap_or("10.0").parse::<f64>().unwrap();
+    let environment_time = matches
+        .value_of("environment_time")
+        .unwrap_or("10.0")
+        .parse::<f64>()
+        .unwrap();
 
-    let environment_time_variation = matches.value_of("environment_time_variation")
-        .unwrap_or("1.0").parse::<f64>().unwrap();
+    let environment_time_variation = matches
+        .value_of("environment_time_variation")
+        .unwrap_or("1.0")
+        .parse::<f64>()
+        .unwrap();
 
     // Compute derived parameters
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
@@ -656,13 +764,14 @@ fn main() {
 
     // Create output file and write header
     let mut outfile = File::create(output_file).expect("Cannot creat file");
-    outfile.write(b"Generation,eggAA,eggAB,eggBB,adultAA,adultAB,adultBB\n").expect("Cannot write to file");
+    outfile
+        .write(b"Generation,eggAA,eggAB,eggBB,adultAA,adultAB,adultBB\n")
+        .expect("Cannot write to file");
 
     //// Iterate over generations
     println!("#Gen\tStage\tNum\tAA\tAB\tBB");
 
     for gen in 1..=number_generations {
-
         // Egg survival to adulthood (except generation 1)
         if gen != 1 {
             // Egg survival by sex and genotype
@@ -813,7 +922,6 @@ fn main() {
 
         // Each female reproduces with one male
         for female in mature_females.iter() {
-
             // Pick weighted random mate genotype
             let random_male_genotype = proportion_genotypes
                 .choose_weighted(&mut rng, |item| item.proportion)
@@ -824,7 +932,6 @@ fn main() {
             let num_eggs = *female_eggs.get(female).unwrap() as u32;
 
             for _ in 1..=num_eggs {
-
                 // Get one female allele
                 let female_allele = allele_from_parent(&female);
 
