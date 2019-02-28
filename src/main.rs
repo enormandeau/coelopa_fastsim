@@ -244,7 +244,7 @@ fn main() {
                 .long("experiment-name")
                 .value_name("STRING")
                 .help("Name of output file")
-                .takes_value(true)
+                .takes_value(true),
         )
         .arg(
             Arg::with_name("number_generations")
@@ -623,19 +623,17 @@ fn main() {
         .parse::<f64>()
         .unwrap();
 
-    let stop_when_fixated = match
-        matches.occurrences_of("stop_when_fixated") {
-            0 => false,
-            1 => true,
-            _ => false,
-        };
+    let stop_when_fixated = match matches.occurrences_of("stop_when_fixated") {
+        0 => false,
+        1 => true,
+        _ => false,
+    };
 
-    let quiet = match
-        matches.occurrences_of("quiet") {
-            0 => false,
-            1 => true,
-            _ => false,
-        };
+    let quiet = match matches.occurrences_of("quiet") {
+        0 => false,
+        1 => true,
+        _ => false,
+    };
 
     // Compute derived parameters
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
@@ -833,7 +831,13 @@ fn main() {
         }
 
         // Report egg genotypes and cleanup
-        report_genotypes(&individual_eggs, &gen, &Lifestage::Egg, &mut outfile, &quiet);
+        report_genotypes(
+            &individual_eggs,
+            &gen,
+            &Lifestage::Egg,
+            &mut outfile,
+            &quiet,
+        );
         //individual_eggs_previous = individual_eggs.to_vec();
         individual_eggs.clear();
 
@@ -884,7 +888,13 @@ fn main() {
         }
 
         // Report adult genotypes
-        report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile, &quiet);
+        report_genotypes(
+            &mature_adults,
+            &gen,
+            &Lifestage::Adult,
+            &mut outfile,
+            &quiet,
+        );
 
         //// Reproduction
         // Count male genotypes
@@ -970,14 +980,19 @@ fn main() {
         for p in proportion_genotypes.iter() {
             if p.proportion.is_nan() {
                 print!("{}\t", experiment_name);
-                report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile, &false);
+                report_genotypes(
+                    &mature_adults,
+                    &gen,
+                    &Lifestage::Adult,
+                    &mut outfile,
+                    &false,
+                );
                 process::exit(0);
             }
         }
 
         // Each female reproduces with one male
         for female in mature_females.iter() {
-
             // Pick weighted random mate genotype
             let random_male_genotype = proportion_genotypes
                 .choose_weighted(&mut rng, |item| item.proportion)
@@ -1025,7 +1040,6 @@ fn main() {
 
         individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
 
-
         // Count genotypes to decide if we end the simulation
         // because alleles are fixated
         if stop_when_fixated {
@@ -1045,11 +1059,23 @@ fn main() {
             if (count_aa == 0 && count_ab == 0) || (count_bb == 0 && count_ab == 0) {
                 //println!("Alleles fixated on generation {}!", gen);
                 print!("{}\t", experiment_name);
-                report_genotypes(&individual_eggs, &gen, &Lifestage::Egg, &mut outfile, &false);
+                report_genotypes(
+                    &individual_eggs,
+                    &gen,
+                    &Lifestage::Egg,
+                    &mut outfile,
+                    &false,
+                );
                 break;
             } else if gen == number_generations {
                 print!("{}\t", experiment_name);
-                report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile, &false);
+                report_genotypes(
+                    &mature_adults,
+                    &gen,
+                    &Lifestage::Adult,
+                    &mut outfile,
+                    &false,
+                );
             }
         }
     }
