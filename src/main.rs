@@ -182,17 +182,20 @@ fn report_genotypes(
     generation: &u32,
     lifestage: &Lifestage,
     outfile: &mut File,
+    quiet: &bool,
 ) {
     let genotypes = get_genotype_proportions(&samples);
-    println!(
-        "{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
-        generation,
-        lifestage,
-        samples.len(),
-        genotypes[0],
-        genotypes[1],
-        genotypes[2]
-    );
+    if !quiet {
+        println!(
+            "{}\t{}\t{}\t{:.3}\t{:.3}\t{:.3}",
+            generation,
+            lifestage,
+            samples.len(),
+            genotypes[0],
+            genotypes[1],
+            genotypes[2]
+        );
+    }
 
     // Report to file
     // Eggs come first on each line (no \n) and then adults
@@ -234,6 +237,13 @@ fn main() {
                 .help("Name of output file")
                 .takes_value(true)
                 .required(true),
+        )
+        .arg(
+            Arg::with_name("experiment_name")
+                .long("experiment-name")
+                .value_name("STRING")
+                .help("Name of output file")
+                .takes_value(true)
         )
         .arg(
             Arg::with_name("number_generations")
@@ -424,12 +434,31 @@ fn main() {
                 .help("Deviation on breeding environment duration [0, 1] (default=1.0)")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("stop_when_fixated")
+                .long("stop-when-fixated")
+                .value_name("BOOL")
+                .help("Stop simulation if only one allele remains (default=false)")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("quiet")
+                .long("quiet")
+                .short("q")
+                .value_name("BOOL")
+                .help("Do no report progress on screen (default=false)")
+                .takes_value(false),
+        )
         .get_matches();
 
     // Convert parameters to wanted types
     let output_file = matches
         .value_of("output_file")
         .expect("Cannot create output file");
+
+    let experiment_name = matches
+        .value_of("experiment_name")
+        .unwrap_or("unnamed_experiment");
 
     let number_generations = matches
         .value_of("number_generations")
@@ -592,6 +621,20 @@ fn main() {
         .unwrap_or("1.0")
         .parse::<f64>()
         .unwrap();
+
+    let stop_when_fixated = match
+        matches.occurrences_of("stop_when_fixated") {
+            0 => false,
+            1 => true,
+            _ => false,
+        };
+
+    let quiet = match
+        matches.occurrences_of("quiet") {
+            0 => false,
+            1 => true,
+            _ => false,
+        };
 
     // Compute derived parameters
     let proportion_ab = 1.0 - proportion_aa - proportion_bb;
@@ -769,7 +812,9 @@ fn main() {
         .expect("Cannot write to file");
 
     //// Iterate over generations
-    println!("#Gen\tStage\tNum\tAA\tAB\tBB");
+    if !quiet {
+        println!("#Gen\tStage\tNum\tAA\tAB\tBB");
+    }
 
     for gen in 1..=number_generations {
         // Egg survival to adulthood (except generation 1)
@@ -787,7 +832,7 @@ fn main() {
         }
 
         // Report egg genotypes and cleanup
-        report_genotypes(&individual_eggs, &gen, &Lifestage::Egg, &mut outfile);
+        report_genotypes(&individual_eggs, &gen, &Lifestage::Egg, &mut outfile, &quiet);
         //individual_eggs_previous = individual_eggs.to_vec();
         individual_eggs.clear();
 
@@ -838,7 +883,7 @@ fn main() {
         }
 
         // Report adult genotypes
-        report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile);
+        report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile, &quiet);
 
         //// Reproduction
         // Count male genotypes
@@ -969,26 +1014,31 @@ fn main() {
 
         individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
 
-        //// Count genotypes to decide if we end the simulation
-        //// because alleles are fixated
-        //let num_individual_eggs = individual_eggs.len();
+        // Count genotypes to decide if we end the simulation
+        // because alleles are fixated
+        if stop_when_fixated {
+            let mut count_aa = 0;
+            let mut count_ab = 0;
+            let mut count_bb = 0;
 
-        //let mut count_AA = 0;
-        //let mut count_AB = 0;
-        //let mut count_BB = 0;
+            for egg in individual_eggs.iter() {
+                match egg.genotype {
+                    Genotype::AA => count_aa += 1,
+                    Genotype::AB => count_ab += 1,
+                    Genotype::BB => count_bb += 1,
+                }
+            }
 
-        //for egg in individual_eggs.iter() {
-        //    match egg.genotype {
-        //        Genotype::AA => count_AA += 1,
-        //        Genotype::AB => count_AB += 1,
-        //        Genotype::BB => count_BB += 1,
-        //    }
-        //}
-
-        //// End simulation if either AA or BB alleles get fixated
-        //if (count_AA == 0 && count_AB == 0) || (count_BB == 0 && count_AB == 0) {
-        //    println!("Alleles fixated on generation {}!", gen);
-        //    break;
-        //}
+            // End simulation if either AA or BB alleles get fixated
+            if (count_aa == 0 && count_ab == 0) || (count_bb == 0 && count_ab == 0) {
+                //println!("Alleles fixated on generation {}!", gen);
+                print!("{}\t", experiment_name);
+                report_genotypes(&individual_eggs, &gen, &Lifestage::Egg, &mut outfile, &false);
+                break;
+            } else if gen == number_generations {
+                print!("{}\t", experiment_name);
+                report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile, &false);
+            }
+        }
     }
 }
