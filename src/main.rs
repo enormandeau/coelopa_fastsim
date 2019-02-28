@@ -217,9 +217,6 @@ fn report_genotypes(
 
 //// Main
 fn main() {
-    //// Parameters
-    // TODO Parse arguments with `clap`
-
     // Get parameters with Clap
     let matches = App::new("Coelopa FastSim")
         .version("v0.1")
@@ -228,6 +225,7 @@ fn main() {
         // Parameter names have underscores but 'long' have
         // dashes for compatibility with Python arguments and
         // so the automatic simulation script can launch both
+        // without too many modifications
         // Can't remember what this "slop" option does...
         //.arg(Arg::with_name("slop").multiple(true).last(true))
         .arg(
