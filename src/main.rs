@@ -12,6 +12,7 @@ use rand::Rng;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
+use std::process;
 use std::vec::Vec;
 
 //// Enums
@@ -965,8 +966,18 @@ fn main() {
             },
         ];
 
+        // Stop simulation if one of proportion_genotypes is NaN
+        for p in proportion_genotypes.iter() {
+            if p.proportion.is_nan() {
+                print!("{}\t", experiment_name);
+                report_genotypes(&mature_adults, &gen, &Lifestage::Adult, &mut outfile, &false);
+                process::exit(0);
+            }
+        }
+
         // Each female reproduces with one male
         for female in mature_females.iter() {
+
             // Pick weighted random mate genotype
             let random_male_genotype = proportion_genotypes
                 .choose_weighted(&mut rng, |item| item.proportion)
@@ -1013,6 +1024,7 @@ fn main() {
         }
 
         individual_eggs = individual_eggs[..keep_n_eggs].to_vec();
+
 
         // Count genotypes to decide if we end the simulation
         // because alleles are fixated
