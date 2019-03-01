@@ -13,7 +13,6 @@ grep -v "#" "$PARAMETER_FILE" |
     sort -u |
     while read experiment
     do
-        echo "$experiment"
         rm -r "$OUTPUT_FOLDER"/"$experiment" 2>/dev/null
         mkdir "$OUTPUT_FOLDER"/"$experiment" 2>/dev/null
     done
@@ -27,8 +26,9 @@ grep -v "#" "$PARAMETER_FILE" |
 
         # For each parameter set, run $NUMBER_REPLICATES simulations
         seq -w "$NUMBER_REPLICATES" |
-            parallel -j 20 ./target/release/coelopa_fastsim \
+            parallel -k -j 10 ./target/release/coelopa_fastsim \
                 -o "$OUTPUT_FOLDER"/"${array[0]}"/"${array[1]}"_replicate_{}.csv \
+                    --experiment-name             "${array[1]}"   \
                     --number-generations          "${array[3]}"   \
                     --number-eggs-per-generation  "${array[4]}"   \
                     --number-eggs-per-female      "${array[5]}"   \
@@ -55,5 +55,6 @@ grep -v "#" "$PARAMETER_FILE" |
                     --male-maturation-days-bb     "${array[26]}"  \
                     --maturation-cv               "${array[27]}"  \
                     --environment-time            "${array[28]}"  \
-                    --environment-time-variation  "${array[29]}"
+                    --environment-time-variation  "${array[29]}"  \
+                    --stop-when-fixated -q
     done
