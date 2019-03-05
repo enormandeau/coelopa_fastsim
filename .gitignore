@@ -1,5 +1,6 @@
 *.csv
 *.gz
+*.test
 *.tgz
 *.tsv
 *.zip
