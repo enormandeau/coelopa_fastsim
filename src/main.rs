@@ -112,10 +112,7 @@ fn create_first_generation(
             .unwrap()
             .genotype;
 
-        samples.push(Fly {
-            sex,
-            genotype,
-        });
+        samples.push(Fly { sex, genotype });
     }
 
     samples
@@ -150,7 +147,7 @@ fn genotype_from_alleles(a1: char, a2: char) -> Genotype {
     }
 }
 
-fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
+fn get_genotype_proportions(samples: &[Fly]) -> [f64; 3] {
     // Return array of 3 values containing the proportion of
     // AA, AB, and BB genotypes
     let mut genotype_counts = [0, 0, 0];
@@ -177,7 +174,7 @@ fn get_genotype_proportions(samples: &Vec<Fly>) -> [f64; 3] {
 
 fn report_genotypes(
     // Print genotype proportions on screen and write them to file
-    samples: &Vec<Fly>,
+    samples: &[Fly],
     generation: u32,
     lifestage: Lifestage,
     outfile: &mut File,
@@ -827,13 +824,7 @@ fn main() {
         }
 
         // Report egg genotypes and cleanup
-        report_genotypes(
-            &individual_eggs,
-            gen,
-            Lifestage::Egg,
-            &mut outfile,
-            quiet,
-        );
+        report_genotypes(&individual_eggs, gen, Lifestage::Egg, &mut outfile, quiet);
         //individual_eggs_previous = individual_eggs.to_vec();
         individual_eggs.clear();
 
@@ -884,13 +875,7 @@ fn main() {
         }
 
         // Report adult genotypes
-        report_genotypes(
-            &mature_adults,
-            gen,
-            Lifestage::Adult,
-            &mut outfile,
-            quiet,
-        );
+        report_genotypes(&mature_adults, gen, Lifestage::Adult, &mut outfile, quiet);
 
         //// Reproduction
         // Count male genotypes
@@ -973,13 +958,7 @@ fn main() {
         for p in proportion_genotypes.iter() {
             if p.proportion.is_nan() {
                 print!("{}\t", experiment_name);
-                report_genotypes(
-                    &mature_adults,
-                    gen,
-                    Lifestage::Adult,
-                    &mut outfile,
-                    false,
-                );
+                report_genotypes(&mature_adults, gen, Lifestage::Adult, &mut outfile, false);
                 process::exit(0);
             }
         }
@@ -1015,17 +994,13 @@ fn main() {
                     Sex::Male
                 };
 
-                individual_eggs.push(Fly {
-                    sex,
-                    genotype,
-                });
+                individual_eggs.push(Fly { sex, genotype });
             }
         }
 
         // Shuffle and keep number_eggs_per_generation eggs
         individual_eggs.shuffle(&mut rng);
         let number_eggs = individual_eggs.len();
-
 
         let keep_n_eggs = if number_eggs < number_eggs_per_generation {
             number_eggs
@@ -1054,23 +1029,11 @@ fn main() {
             if (count_aa == 0 || count_bb == 0) && count_ab == 0 {
                 //println!("Alleles fixated on generation {}!", gen);
                 print!("{}\t", experiment_name);
-                report_genotypes(
-                    &individual_eggs,
-                    gen,
-                    Lifestage::Egg,
-                    &mut outfile,
-                    false,
-                );
+                report_genotypes(&individual_eggs, gen, Lifestage::Egg, &mut outfile, false);
                 break;
             } else if gen == number_generations {
                 print!("{}\t", experiment_name);
-                report_genotypes(
-                    &mature_adults,
-                    gen,
-                    Lifestage::Adult,
-                    &mut outfile,
-                    false,
-                );
+                report_genotypes(&mature_adults, gen, Lifestage::Adult, &mut outfile, false);
             }
         }
     }
