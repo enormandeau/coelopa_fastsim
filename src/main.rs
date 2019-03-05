@@ -813,7 +813,7 @@ fn main() {
         println!("#Gen\tStage\tNum\tAA\tAB\tBB");
     }
 
-    for gen in 1..=number_generations {
+    for gen in 0..=number_generations {
         // Egg survival to adulthood (except generation 1)
         if gen != 1 {
             // Egg survival by sex and genotype
