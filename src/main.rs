@@ -815,7 +815,7 @@ fn main() {
 
     for gen in 0..=number_generations {
         // Egg survival to adulthood (except generation 1)
-        if gen != 1 {
+        if gen != 0 {
             // Egg survival by sex and genotype
             individual_adults.clear();
 

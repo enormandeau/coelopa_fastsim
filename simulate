@@ -55,6 +55,6 @@ grep -v "#" "$PARAMETER_FILE" |
                     --male-maturation-days-bb     "${array[26]}"  \
                     --maturation-cv               "${array[27]}"  \
                     --environment-time            "${array[28]}"  \
-                    --environment-time-variation  "${array[29]}"  \
-                    --stop-when-fixated -q
+                    --environment-time-variation  "${array[29]}"  #\
+                    #--stop-when-fixated -q
     done
