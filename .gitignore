@@ -4,6 +4,7 @@
 *.tgz
 *.tsv
 *.zip
+*.~lock.*
 *data*
 *~
 target
