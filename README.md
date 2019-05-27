@@ -5,6 +5,26 @@ Coelopa inversion selection simulation in Rust
 This code is released with the following paper :  
 [Balancing selection via life-history trade-offs maintains an inversion polymorphism in a seaweed fly](https://www.biorxiv.org/content/10.1101/648584v1)
 
+## Pre-requisites
+
+In order to use `coelopa_fastsim`, you will need the [rust compiler](https://www.rust-lang.org/learn/get-started)
+
+## Running
+
+1. Prepare a parameter file. See examples used in the paper in the `02_info` folder.
+
+2. Compile the code:
+```
+cargo build --release
+```
+
+3. Launch simulation with the `simulate` wrapper script. Pass it the name of the parameter file and an integer for the number of replicates to run per simulation:
+```
+./simulate 02_info/parameters_to_test_61_rust_freq_env_2019-05-06.csv 30
+```
+
+Use `./simulate_stop_when_fixated` if you want the run to end once only one allele remains.
+
 ## License
 
 CC share-alike
