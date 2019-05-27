@@ -1,0 +1,11 @@
+#ensemble,experience,parametersChanging,numGenerations,eggsPerGenerations,eggsPerFemale,proportionFemales,propAA,propBB,globalSurvival,survivalFemalesAA,survivalFemalesAB,survivalFemalesBB,survivalMalesAA,survivalMalesAB,survivalMalesBB,reprodMalesAA,reprodMalesAB,reprodMalesBB,malesFreqDepCoef,eggsFemalesAA,eggsFemalesAB,eggsFemalesBB,femaleMaturation,maleMaturationAA,maleMaturationAB,maleMaturationBB,maturationCV,environmentTime,environmentTimeVariation
+44_rust_repro,44_rust_repro_BB0.1,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.55,0.1,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.2,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.6,0.2,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.3,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.65,0.3,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.4,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.7,0.4,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.5,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.75,0.5,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.6,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.8,0.6,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.7,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.85,0.7,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.8,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.9,0.8,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB0.9,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,0.95,0.9,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
+44_rust_repro,44_rust_repro_BB1,environment,200,10000,70,0.5,0.07,0.44,0.3,0.71,0.9,1,0.81,1,0.88,1,1,1,0,1,0.97,0.87,8.8,12.8,10.3,8.7,0.5,30,1
