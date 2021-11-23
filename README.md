@@ -5,7 +5,7 @@ Coelopa inversion selection simulation in Rust
 This code is released with the following paper :  
 [Balancing selection via life-history trade-offs maintains an inversion polymorphism in a seaweed fly](https://www.biorxiv.org/content/10.1101/648584v1)
 
-Version v1.0.0 was used for the paper and can be downloaded in [releases](https://github.com/enormandeau/coelopa_fastsim/releases)
+Version v1.0.0 was used for the paper and can be downloaded in [releases](https://github.com/enormandeau/coelopa_fastsim/releases) under the Tags tab.
 
 ## Pre-requisites
 
